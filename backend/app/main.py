@@ -1,8 +1,12 @@
 from fastapi import FastAPI
 from app.db.database import engine
 from sqlalchemy import text
+# from app.core.config import APP_NAME, DB_NAME
+from app.routes import auth
 
 app=FastAPI(title="Modern Digital Banking API")
+
+app.include_router(auth.router)
 
 @app.get("/health")
 def health_check():
@@ -22,3 +26,12 @@ def db_check():
             "db_status": "error",
             "details": str(e)
         }
+        
+# @app.get("/env-check")
+# def env_check():
+#     return {
+#         "app_name": APP_NAME,
+#         "db_name": DB_NAME
+#     }
+    
+    
