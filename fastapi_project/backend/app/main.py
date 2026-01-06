@@ -1,7 +1,11 @@
 from fastapi import FastAPI
+from app.database import engine, Base
+from app.routes import auth
+from app.models import user   # 👈 IMPORTANT
 
-app = FastAPI(title="Banking Dashboard API")
+app = FastAPI()
 
-@app.get("/")
-def root():
-    return {"message": "Banking Dashboard Backend is running"}
+# 🔥 CREATE TABLES
+Base.metadata.create_all(bind=engine)
+
+app.include_router(auth.router)
