@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Bank Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="auth-bg">
+
+<div class="auth-card">
+    <h2>🏦 My Bank Dashboard</h2>
+
+    <button class="btn-primary" onclick="goTransfer()">💸 Transfer Money</button>
+
+    <button class="btn-primary" onclick="goHistory()">📜 Transaction History</button>
+
+    <!-- ✅ LOGOUT BUTTON SAME BLUE -->
+    <button class="btn-primary" onclick="logout()">🚪 Logout</button>
+</div>
+
+<script>
+function goTransfer() {
+    window.location.href = "transfer.html";
+}
+
+function goHistory() {
+    window.location.href = "transactions.html";
+}
+
+function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+}
+</script>
+
+</body>
+</html>
+

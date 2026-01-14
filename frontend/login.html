@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bank Login</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="auth-bg">
+
+<div class="auth-card">
+    <h2>Bank Login</h2>
+
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+
+    <p id="message"></p>
+
+    <button class="btn-primary" onclick="login()">Login</button>
+
+    <p>Don’t have an account? <a href="register.html">Register</a></p>
+</div>
+
+<script>
+function login() {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const message = document.getElementById("message");
+
+    if (!email || !password) {
+        message.innerText = "❌ Field required";
+        message.style.color = "red";
+        return;
+    }
+
+    // OAuth2 login uses form-urlencoded
+    const formData = new URLSearchParams();
+    formData.append("username", email);
+    formData.append("password", password);
+
+    fetch("http://127.0.0.1:8000/auth/login", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: formData
+    })
+    .then(async res => {
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.detail || "Invalid credentials");
+        }
+        return data;
+    })
+    .then(data => {
+        localStorage.setItem("token", data.access_token);
+        message.innerText = "✅ Login successful";
+        message.style.color = "green";
+
+        setTimeout(() => {
+            window.location.href = "dashboard.html";
+        }, 800);
+    })
+    .catch(err => {
+        message.innerText = "❌ " + err.message;
+        message.style.color = "red";
+    });
+}
+</script>
+
+</body>
+</html>
