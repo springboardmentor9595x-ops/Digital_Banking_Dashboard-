@@ -9,10 +9,11 @@ function Dashboard({ onLogout }) {
   
   const [data, setData] = useState(null);  
   const [loading, setLoading] = useState(true);  
+  const [view, setView] = useState('dashboard');  // 'dashboard' | 'account'
 
-  // NEW STATES (from Code 2)
-  const [selectedAccount, setSelectedAccount] = useState(null); 
-  const [searchTerm, setSearchTerm] = useState('');            
+  // NEW STATES
+  const [selectedAccount, setSelectedAccount] = useState(null);  
+  const [searchTerm, setSearchTerm] = useState('');      
   const [isModalOpen, setIsModalOpen] = useState(false);       
 
   // ==========================================
@@ -123,161 +124,208 @@ function Dashboard({ onLogout }) {
           </div>
 
         </div>
-      </div>
+            {/* ADD MODAL HERE */}
+                <AddAccountModal
+                  isOpen={isModalOpen}
+                  onClose={() => setIsModalOpen(false)}
+                  onAccountAdded={loadData}
+                />
+              </div>
     );
   }
 
 
   // ==========================================
-  // MAIN DASHBOARD VIEW
+  // TRANSACTION VIEW
   // ==========================================
-  
-  return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-6xl mx-auto">
-        
+
+  if (view === 'account' && selectedAccount) {
+    return (
+      <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-5xl mx-auto">
+
         {/* Header */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">Welcome, {data.user.name} to your Dashboard! 🏦</h1>
-            <p className="text-gray-600">{data.user.email}</p>
-          </div>
-          <button 
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={() => {
+              setView('dashboard');
+              setSelectedAccount(null);
+            }}
+            className="text-indigo-600 font-medium hover:underline"
+            >
+            ← Back to Dashboard
+          </button>
+
+          <button
             onClick={onLogout}
-            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-          >
+            className="bg-red-500 text-white px-4 py-2 rounded-lg"
+            >
             Logout
           </button>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div 
-            className="bg-gradient-to-r from-indigo-600 to-blue-500 text-white rounded-2xl shadow-lg p-6"
-              onClick={() => setSelectedAccount(null)}
-          >
-            <p className="text-indigo-100 text-sm mb-1 uppercase tracking-wide">
-              Total Balance
-            </p>
-            <p className="text-3xl font-bold">
-              {formatMoney(data.summary.total_balance)}
-            </p>
-            <p className="text-blue-100 text-sm mt-2">
-              {data.summary.total_accounts} accounts
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-md p-6">
-            <p className="text-gray-500 text-sm mb-1">Total Income</p>
-            <p className="text-3xl font-bold text-green-600">
-              +{formatMoney(data.summary.total_income)}
-            </p>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-gray-500 text-sm mb-1">Total Expenses</p>
-            <p className="text-3xl font-bold text-red-600">
-              -{formatMoney(data.summary.total_expenses)}
-            </p>
-
-          </div>
+        {/* Account Card */}
+        <div className="bg-white rounded-2xl shadow p-6 mb-6">
+          <h1 className="text-2xl font-bold">
+            {selectedAccount.bank_name}
+          </h1>
+          <p className="text-gray-500">
+            {selectedAccount.account_type} • {selectedAccount.masked_account}
+          </p>
+          <p className="text-3xl font-bold mt-4">
+            ₹{selectedAccount.balance}
+          </p>
         </div>
 
-        {/* Accounts List */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Your Accounts</h2>
+        {/* Transactions */}
+        <div className="bg-white rounded-2xl shadow p-6">
+          <h2 className="text-xl font-bold mb-4">
+            Transactions
+          </h2>
+
+          {filteredTransactions.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">
+              No transactions for this account
+            </p>
+          ) : (
+            filteredTransactions.map((txn) => (
+              <div
+              key={txn.id}
+              className="flex justify-between items-center p-4 border-b"
+              >
+                <div>
+                  <p className="font-medium">
+                    {txn.description || txn.merchant}
+
+                  </p>
+                  <p className="text-sm text-gray-500">
+                     {formatDate(txn.txn_date)} • {txn.category}
+                  </p>
+                </div>
+
+                <p
+                  className={`font-bold ${
+                    txn.txn_type === 'credit'
+                    ? 'text-green-600'
+                    : 'text-red-600'
+                  }`}
+                  >
+                  {txn.txn_type === 'credit' ? '+' : '-'}₹{txn.amount}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+  // ==========================================
+  // MAIN DASHBOARD VIEW 
+  // ==========================================
+
+    return (
+      <div className="min-h-screen bg-gray-100 p-6">
+        <div className="max-w-6xl mx-auto">
+          
+          {/* Header */}
+          <div className="bg-white rounded-lg shadow p-6 mb-6 flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold">Welcome, {data.user.name} to your Dashboard! 🏦</h1>
+              <p className="text-gray-600">{data.user.email}</p>
+            </div>
             <button 
-              onClick={() => setIsModalOpen(true)}
-              className="text-blue-600 font-medium"
+              onClick={onLogout}
+              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
             >
-              + Add Account
+              Logout
             </button>
           </div>
 
-          <div className="space-y-3">
-            {data.accounts.map((account) => (
-              <div 
-                key={account.id}
-                onClick={() => setSelectedAccount(account)}
-                className={`flex justify-between items-center p-4 rounded-lg cursor-pointer ${
-                  selectedAccount?.id === account.id
-                    ? 'bg-blue-100 border border-blue-400'
-                    : 'bg-gray-50'
-                }`}
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div 
+              className="bg-gradient-to-r from-indigo-600 to-blue-500 text-white rounded-2xl shadow-lg p-6"
+                onClick={() => setSelectedAccount(null)}
+            >
+              <p className="text-indigo-100 text-sm mb-1 uppercase tracking-wide">
+                Total Balance
+              </p>
+              <p className="text-3xl font-bold">
+                {formatMoney(data.summary.total_balance)}
+              </p>
+              <p className="text-blue-100 text-sm mt-2">
+                {data.summary.total_accounts} accounts
+              </p>
+            </div>
+
+            <div className="bg-green-500 rounded-2xl shadow-md p-6">
+              <p className="text-white text-sm mb-1">Total Income</p>
+              <p className="text-3xl font-bold text-white">
+                +{formatMoney(data.summary.total_income)}
+              </p>
+            </div>
+
+            <div className="bg-red-500 rounded-lg shadow p-6">
+              <p className="text-white text-sm mb-1">Total Expenses</p>
+              <p className="text-3xl font-bold text-white">
+                -{formatMoney(data.summary.total_expenses)}
+              </p>
+            </div>
+          </div>
+
+          {/* Accounts List */}
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Your Accounts</h2>
+              <button 
+                onClick={() => setIsModalOpen(true)}
+                className="text-blue-600 font-medium"
               >
-                <div>
-                  <p className="font-semibold">{account.bank_name}</p>
-                  <p className="text-sm text-gray-600">
-                    {account.account_type} • {account.masked_account || 'N/A'}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold">{formatMoney(account.balance)}</p>
-                  <p className="text-sm text-gray-500">{account.currency}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+                + Add Account
+              </button>
+            </div>
 
-        {/* Recent Transactions */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">
-              {selectedAccount
-                ? `Transactions: ${selectedAccount.bank_name}`
-                : 'Recent Transactions'}
-            </h2>
-
-            <input
-              type="text"
-              placeholder="Search by merchant or category..."
-              className="border rounded px-3 py-2"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          {filteredTransactions.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No transactions found</p>
-          ) : (
-            <div className="space-y-3">
-              {filteredTransactions.slice(0, 10).map((txn) => (
+            <div className="space-y-2">
+              {data.accounts.map((account) => (
                 <div 
-                  key={txn.id}
-                  className="flex justify-between items-center p-4 bg-gray-50 rounded-lg"
+                  key={account.id}
+                  onClick={() => {
+                    setSelectedAccount(account);
+                    setView('account');
+                  }}
+                  className={`flex justify-between items-center p-4 rounded-lg cursor-pointer ${
+                    selectedAccount?.id === account.id
+                      ? 'bg-blue-100 border border-blue-400'
+                      : 'bg-gray-50'
+                  }`}
                 >
                   <div>
-                    <p className="font-medium">{txn.description || 'Transaction'}</p>
+                    <p className="font-semibold">{account.bank_name}</p>
                     <p className="text-sm text-gray-600">
-                      {txn.merchant || txn.category || 'N/A'} • {formatDate(txn.txn_date)}
+                      {account.account_type} • {account.masked_account || 'N/A'}
                     </p>
                   </div>
-                  <div>
-                    <p className={`font-bold ${
-                      txn.txn_type === 'credit' ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {txn.txn_type === 'credit' ? '+' : '-'}
-                      {formatMoney(txn.amount)}
-                    </p>
+                  <div className="text-right">
+                    <p className="font-bold">{formatMoney(account.balance)}</p>
+                    <p className="text-sm text-gray-500">{account.currency}</p>
                   </div>
                 </div>
               ))}
             </div>
-          )}
+          </div>
+
+          {/* Modal */}
+          <AddAccountModal 
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onAccountAdded={loadData}
+          />
+
         </div>
-
-        {/* Modal */}
-        <AddAccountModal 
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onAccountAdded={loadData}
-        />
-
       </div>
-    </div>
-  );
+    );
 }
 
 export default Dashboard;
