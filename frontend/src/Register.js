@@ -6,6 +6,7 @@ function Register({ onRegisterSuccess, onGoToLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
+  const [kycStatus, setKycStatus] = useState('unverified');  // New state for KYC status
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -15,7 +16,7 @@ function Register({ onRegisterSuccess, onGoToLogin }) {
     setLoading(true);
     try {
         // Call register API
-        await register(name, email, password, phone);
+        await register(name, email, password, phone, kycStatus);
 
         // Show success message
         alert('Registration successful! Please login.');
@@ -88,6 +89,21 @@ function Register({ onRegisterSuccess, onGoToLogin }) {
               className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               placeholder="9876543210"
             />
+          </div>
+
+          {/* KYC Status */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              KYC Status
+            </label>
+            <select
+              value={kycStatus}
+              onChange={(e) => setKycStatus(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="unverified">Unverified</option>
+              <option value="verified">Verified</option>
+            </select>
           </div>
 
           {/* Password Input */}
