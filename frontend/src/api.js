@@ -30,8 +30,8 @@ export const login = (email, password) => {
 };
 
 // REGISTER
-export const register = (name, email, password, phone) => {
-  return API.post('/auth/register', { name, email, password, phone });
+export const register = (name, email, password, phone, kycStatus) => {
+  return API.post('/auth/register', { name, email, password, phone, kycStatus });
 };
 
 // DASHBOARD
@@ -52,4 +52,9 @@ export const getTransactions = () => {
 // CREATE ACCOUNT
 export const createAccount = (accountData) => {
   return API.post('/accounts', accountData);
+};
+
+// Delete ACCOUNT
+export const deleteAccount = (accountId) => {
+  return API.delete(`/accounts/${accountId}`);
 };
