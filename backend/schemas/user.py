@@ -11,3 +11,4 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: PasswordStr
     phone: str
+    kyc_status: str  # New field for KYC status
