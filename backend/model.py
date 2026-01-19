@@ -30,7 +30,7 @@ class AccountType(enum.Enum):
     """Bank account types"""
     savings = "savings"
     checking = "checking"
-    creditcard = "credit_card"
+    credit_card = "credit_card"
     loan = "loan"
     investment = "investment"
 
