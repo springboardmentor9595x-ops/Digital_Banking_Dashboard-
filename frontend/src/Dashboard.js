@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'; 
-import { getDashboard } from './api';
+import { getDashboard, deleteAccount} from './api';
 import AddAccountModal from './components/AddAccountModal';
 
 function Dashboard({ onLogout }) {
@@ -10,6 +10,25 @@ function Dashboard({ onLogout }) {
   const [data, setData] = useState(null);  
   const [loading, setLoading] = useState(true);  
   const [view, setView] = useState('dashboard');  // 'dashboard' | 'account'
+
+  // ==========================================
+  // DELETE ACCOUNT HANDLER
+  // ==========================================
+  const handleDeleteAccount = async (accountId) => {
+    const confirmDelete = window.confirm(
+      'Are you sure you want to delete this account?'
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await deleteAccount(accountId);
+      loadData(); // refresh dashboard
+    } catch (error) {
+      console.error(error);
+      alert('Failed to delete account');
+    }
+  };
 
   // NEW STATES
   const [selectedAccount, setSelectedAccount] = useState(null);  
@@ -301,20 +320,32 @@ function Dashboard({ onLogout }) {
                       : 'bg-gray-50'
                   }`}
                 >
-                  <div>
+                  <div className="flex-1">
                     <p className="font-semibold">{account.bank_name}</p>
                     <p className="text-sm text-gray-600">
                       {account.account_type} • {account.masked_account || 'N/A'}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold">{formatMoney(account.balance)}</p>
-                    <p className="text-sm text-gray-500">{account.currency}</p>
+
+                  <div className="text-right flex flex-col items-end gap-1">
+                    <p className="font-bold">
+                      {formatMoney(account.balance)}
+                    </p>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();   
+                        handleDeleteAccount(account.id);
+                      }}
+                      className="text-xs text-red-600 hover:text-red-800 hover:underline"
+                    >
+                      Delete
+                    </button>
                   </div>
-                </div>
+                </div>   
               ))}
-            </div>
-          </div>
+            </div>      
+          </div>       
 
           {/* Modal */}
           <AddAccountModal 
@@ -322,6 +353,7 @@ function Dashboard({ onLogout }) {
             onClose={() => setIsModalOpen(false)}
             onAccountAdded={loadData}
           />
+
 
         </div>
       </div>
