@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { register } from './api';
+import { showSuccess, showError } from './utils/toast'; // Notification library
 
 function Register({ onRegisterSuccess, onGoToLogin }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
-  const [kycStatus, setKycStatus] = useState('unverified');  // New state for KYC status
+  const [kycStatus, setKycStatus] = useState('unverified');  
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -15,18 +16,14 @@ function Register({ onRegisterSuccess, onGoToLogin }) {
     setError('');
     setLoading(true);
     try {
-        // Call register API
-        await register(name, email, password, phone, kycStatus);
+      await register(name, email, password, phone);
 
-        // Show success message
-        alert('Registration successful! Please login.');
+      showSuccess('Account created successfully');
+      onRegisterSuccess();
 
-        // Switch to login page
-        onRegisterSuccess();
-
-        } catch (err) {
-            setError(err.response?.data?.detail || 'Registration failed');
-        } finally {
+    } catch (err) {
+      // showError(err.response?.data?.detail || 'Registration failed');
+    } finally {
             setLoading(false);
         }
     };

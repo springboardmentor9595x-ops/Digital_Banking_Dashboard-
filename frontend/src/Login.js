@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { login } from './api';
-
+import { showSuccess, showError } from './utils/toast';  // Notification library 
 
 // ==========================================
 // LOGIN COMPONENT
@@ -10,9 +10,7 @@ function Login({ onLoginSuccess, onGoToRegister }) {
   // ==========================================
   // STATE VARIABLES (Data that can change)
   // ==========================================
-  
-  // useState Hook: Creates a reactive variable
-  // Format: const [value, setValue] = useState(initialValue);
+
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,19 +32,16 @@ function Login({ onLoginSuccess, onGoToRegister }) {
     setLoading(true);
     
     try {
-      // Call API (wait for response)
       const response = await login(email, password);
-      
-      // Save token to localStorage
       localStorage.setItem('token', response.data.access_token);
-      
-      // Tell parent component login succeeded
+
+      showSuccess('Login successful');
       onLoginSuccess();
-      
+
     } catch (err) {
-      // If API call fails, show error message
-      setError(err.response?.data?.detail || 'Login failed');
-      
+      const message = err.response?.data?.detail || 'Login failed';
+      setError(message);
+      // showError(message);
     } finally {
          // Hide loading state (runs whether success or failure)
       setLoading(false);
@@ -71,14 +66,6 @@ function Login({ onLoginSuccess, onGoToRegister }) {
         <h2 className="text-xl text-gray-700 text-center mb-8">
           Login to Your Account
         </h2>
-
-        
-        {/* Error Message (only shows if error exists) */}
-        {error && (
-          <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
-            {error}
-          </div>
-        )}
         
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
