@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'; 
 import { getDashboard, deleteAccount} from './api';
 import AddAccountModal from './components/AddAccountModal';
+import { showSuccess, showError, showConfirm } from './utils/toast';   // Notification library
 
 function Dashboard({ onLogout }) {
   // ==========================================
@@ -15,18 +16,25 @@ function Dashboard({ onLogout }) {
   // DELETE ACCOUNT HANDLER
   // ==========================================
   const handleDeleteAccount = async (accountId) => {
-    const confirmDelete = window.confirm(
-      'Are you sure you want to delete this account?'
-    );
-
-    if (!confirmDelete) return;
+    const handleDeleteAccount = (accountId) => {
+      showConfirm('Delete this bank account permanently?', async () => {
+        try {
+          await deleteAccount(accountId);
+          showSuccess('Account deleted');
+          loadData();
+        } catch (error) {
+          console.error(error);
+          // error toast is already handled globally
+        }
+      });
+    };
 
     try {
       await deleteAccount(accountId);
-      loadData(); // refresh dashboard
+      showSuccess('Account deleted');
+      loadData();
     } catch (error) {
-      console.error(error);
-      alert('Failed to delete account');
+      // showError('Failed to delete account');
     }
   };
 

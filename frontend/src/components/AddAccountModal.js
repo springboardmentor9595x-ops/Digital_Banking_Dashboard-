@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { createAccount } from '../api'; 
+import { showSuccess, showError } from '../utils/toast';    // Notification library
 
 function AddAccountModal({ isOpen, onClose, onAccountAdded }) {
   const [formData, setFormData] = useState({
@@ -16,10 +17,11 @@ function AddAccountModal({ isOpen, onClose, onAccountAdded }) {
     e.preventDefault();
     try {
       await createAccount(formData);
-      onAccountAdded(); // Refresh dashboard data
-      onClose();        // Close modal
+      showSuccess('Bank account added');
+      onAccountAdded();
+      onClose();
     } catch (err) {
-      alert('Error adding account');
+      // showError(err.response?.data?.detail || 'Failed to add account');
     }
   };
 
