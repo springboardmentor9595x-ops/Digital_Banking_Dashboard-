@@ -6,3 +6,7 @@
     @apply bg-gray-100 text-gray-800 antialiased;
   }
 }
+.Toastify__toast {
+  border-radius: 12px;
+  font-weight: 500;
+}
