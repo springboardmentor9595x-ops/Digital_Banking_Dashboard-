@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toast } from 'react-toastify';  // Notification library
 
 // ==========================================
 // STEP 1: Create Axios Instance
@@ -58,3 +59,19 @@ export const createAccount = (accountData) => {
 export const deleteAccount = (accountId) => {
   return API.delete(`/accounts/${accountId}`);
 };
+
+//  Global error handling (optional)
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const message =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      'Something went wrong';
+
+    toast.error(message);
+    return Promise.reject(error);
+  }
+);
+
+export default API;
