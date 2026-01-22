@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Transfer Money</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body>
+
+<!-- TOP BAR -->
+<header class="top-bar">
+    <h2>💸 Transfer Money</h2>
+    <button onclick="goBack()" class="logout-btn">Back</button>
+</header>
+
+<section class="grid single">
+
+    <div class="box">
+        <h3>Transfer Details</h3>
+
+        <label>From Bank</label>
+        <select id="fromBank">
+            <option>HDFC Bank</option>
+            <option>SBI Bank</option>
+            <option>AXIS Bank</option>
+        </select>
+
+        <label>From Account ID</label>
+        <input type="number" id="fromAccount" placeholder="Enter account ID">
+
+        <label>To Bank</label>
+        <select id="toBank">
+            <option>SBI Bank</option>
+            <option>HDFC Bank</option>
+            <option>AXIS Bank</option>
+        </select>
+
+        <label>To Account ID</label>
+        <input type="number" id="toAccount" placeholder="Enter account ID">
+
+        <label>Amount (₹)</label>
+        <input type="number" id="amount" placeholder="Enter amount">
+
+        <!-- ✅ TRANSFER BUTTON -->
+        <button onclick="transferMoney()">Transfer</button>
+
+        <!-- ✅ FIXED MESSAGE ID -->
+        <p id="message"></p>
+    </div>
+
+</section>
+
+<script src="js/config.js"></script>
+<script src="js/transfer.js"></script>
+
+<script>
+function goBack() {
+    window.location.href = "dashboard.html";
+}
+</script>
+
+</body>
+</html>

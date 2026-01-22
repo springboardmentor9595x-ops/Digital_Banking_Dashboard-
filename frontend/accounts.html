@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Accounts</title>
+</head>
+<body>
+  <h2>My Accounts</h2>
+
+  <button onclick="loadAccounts()">Load Accounts</button>
+  <pre id="output"></pre>
+
+  <a href="transfer.html">Transfer Money</a><br>
+  <a href="transactions.html">Transaction History</a>
+
+  <script src="app.js"></script>
+  <script>
+    function loadAccounts() {
+      fetch(`${BASE_URL}/accounts/`, {
+        headers: getAuthHeaders()
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("output").innerText =
+          JSON.stringify(data, null, 2);
+      });
+    }
+  </script>
+</body>
+</html>

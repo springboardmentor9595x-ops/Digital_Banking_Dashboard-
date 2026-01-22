@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Bank Dashboard</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body>
+
+<header class="top-bar">
+    <h2>🏦 My Bank Dashboard</h2>
+    <button onclick="logout()" class="logout-btn">Logout</button>
+</header>
+
+<!-- ================= SUMMARY CARDS ================= -->
+<section class="summary">
+    <div class="card">
+        <h4>Total Balance</h4>
+        <p id="total-balance">₹ 0</p>
+    </div>
+
+    <div class="card income">
+        <h4>Total Income</h4>
+        <p id="total-income">₹ 0</p>
+    </div>
+
+    <div class="card expense">
+        <h4>Total Expenses</h4>
+        <p id="total-expenses">₹ 0</p>
+    </div>
+</section>
+
+<!-- ================= BUDGET SUMMARY (NEW ✅) ================= -->
+<section class="summary">
+    <div class="card">
+        <h4>Total Budgets</h4>
+        <p id="total-budgets">0</p>
+    </div>
+
+    <div class="card expense">
+        <h4>Over Budget</h4>
+        <p id="over-budget-count">0</p>
+    </div>
+
+    <div class="card">
+        <h4>Budget Alert</h4>
+        <p id="budget-alert">All good 👍</p>
+    </div>
+</section>
+
+<!-- ================= CHART ================= -->
+<section class="box">
+    <h3>📊 Income vs Expense</h3>
+    <canvas id="incomeExpenseChart" height="120"></canvas>
+</section>
+
+<!-- ================= MAIN GRID ================= -->
+<section class="grid">
+    <div class="box">
+        <h3>🏦 My Accounts</h3>
+        <ul id="accounts"></ul>
+    </div>
+
+    <div class="box">
+        <h3>📜 Recent Transactions</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody id="recent-transactions"></tbody>
+        </table>
+    </div>
+</section>
+
+<!-- ================= ACTION BUTTONS ================= -->
+<div class="actions">
+    <button onclick="goTransfer()">💸 Transfer</button>
+    <button onclick="goTransactions()">📜 View Transactions</button>
+    <button onclick="goBudgets()">📊 Budgets</button>
+    <button onclick="goBills()">🧾 Bills</button>
+    <button onclick="goCategoryRules()">🏷 Category Rules</button>
+</div>
+
+<!-- ================= CONFIG ================= -->
+<script src="js/config.js"></script>
+
+<!-- ✅ CHART.JS MUST COME BEFORE dashboard.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- ================= DASHBOARD LOGIC ================= -->
+<script src="js/dashboard.js"></script>
+
+<!-- ================= NAVIGATION ================= -->
+<script>
+    function goTransfer() {
+        window.location.href = "transfer.html";
+    }
+    function goTransactions() {
+        window.location.href = "history.html";
+    }
+    function goBudgets() {
+        window.location.href = "budgets.html";
+    }
+    function goBills() {
+        window.location.href = "bills.html";
+    }
+    function goCategoryRules() {
+        window.location.href = "category_rules.html";
+    }
+    function logout() {
+        localStorage.removeItem("access_token");
+        window.location.href = "login.html";
+    }
+</script>
+
+</body>
+</html>

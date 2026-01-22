@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transaction History</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="auth-bg">
+
+<div class="history-card">
+    <h2>📄 Transaction History</h2>
+    <div id="tx-list"></div>
+</div>
+
+<script>
+const token = localStorage.getItem("access_token");
+
+if (!token) {
+    alert("Please login first");
+    window.location.href = "login.html";
+}
+
+// Load transactions
+async function loadTransactions() {
+    try {
+        const response = await fetch("http://127.0.0.1:8000/transactions/my-history", {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        const data = await response.json();
+        const list = document.getElementById("tx-list");
+        list.innerHTML = "";
+
+        if (!Array.isArray(data) || data.length === 0) {
+            list.innerHTML = "<p>No transactions found</p>";
+            return;
+        }
+
+        data.forEach(tx => {
+            const isDebit = tx.type === "DEBIT";
+            const sign = isDebit ? "-" : "+";
+            const color = isDebit ? "#dc2626" : "#16a34a";
+
+            const dateText = tx.date
+                ? new Date(tx.date).toLocaleDateString()
+                : "N/A";
+
+            const card = document.createElement("div");
+            card.className = "tx-card";
+
+            card.innerHTML = `
+                <div class="tx-left">
+                    <strong>Transaction ID: ${tx.id}</strong>
+                    <small>Date: ${dateText}</small>
+                    <small>Description: ${tx.description || "—"}</small>
+
+                    <div style="margin-top:6px;">
+                        <span class="category-badge ${tx.category.toLowerCase()}">
+                            ${tx.category}
+                        </span>
+
+                        <select onchange="updateCategory(${tx.id}, this.value)">
+                            <option value="Food" ${tx.category === "Food" ? "selected" : ""}>Food</option>
+                            <option value="Shopping" ${tx.category === "Shopping" ? "selected" : ""}>Shopping</option>
+                            <option value="Travel" ${tx.category === "Travel" ? "selected" : ""}>Travel</option>
+                            <option value="Bills" ${tx.category === "Bills" ? "selected" : ""}>Bills</option>
+                            <option value="Others" ${tx.category === "Others" ? "selected" : ""}>Others</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="tx-right">
+                    <strong style="color:${color}">
+                        ${sign} ₹ ${tx.amount}
+                    </strong>
+                </div>
+            `;
+
+            list.appendChild(card);
+        });
+
+    } catch (error) {
+        console.error(error);
+        document.getElementById("tx-list").innerHTML =
+            "<p>Error loading transactions</p>";
+    }
+}
+
+// Update category
+async function updateCategory(transactionId, newCategory) {
+    try {
+        const response = await fetch(
+            `http://127.0.0.1:8000/transactions/${transactionId}/category`,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                },
+                body: JSON.stringify({ category: newCategory })
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error("Failed to update category");
+        }
+
+        loadTransactions(); // refresh list
+
+    } catch (error) {
+        console.error(error);
+        alert("Error updating category");
+    }
+}
+
+// Initial load
+loadTransactions();
+</script>
+
+
+</body>
+</html>
