@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Budgets</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body>
+
+<header class="top-bar">
+    <h2>📊 Monthly Budgets</h2>
+    <button onclick="goBack()" class="logout-btn">Back</button>
+</header>
+
+<section class="grid">
+
+    <!-- CREATE BUDGET -->
+    <div class="box">
+        <h3>➕ Create Budget</h3>
+
+        <label>Month</label>
+        <input type="number" id="month" min="1" max="12" placeholder="1 - 12">
+
+        <label>Year</label>
+        <input type="number" id="year" placeholder="2026">
+
+        <label>Category</label>
+        <select id="category">
+            <option value="">Select Category</option>
+            <option value="Food">Food</option>
+            <option value="Shopping">Shopping</option>
+            <option value="Transport">Transport</option>
+            <option value="Bills">Bills</option>
+        </select>
+
+        <label>Monthly Limit (₹)</label>
+        <input
+            type="number"
+            id="limit"
+            placeholder="Enter limit"
+            min="1"
+        >
+
+        <button onclick="createBudget()">Create Budget</button>
+
+        <!-- Message -->
+        <p id="msg"></p>
+    </div>
+
+    <!-- BUDGET LIST -->
+    <div class="box">
+        <h3>📈 Budget Status</h3>
+
+        <table class="modern-table">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Month</th>
+                    <th>Limit</th>
+                    <th>Spent</th>
+                    <th>Progress</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="budget-table">
+                <!-- JS inserts rows -->
+            </tbody>
+        </table>
+    </div>
+
+</section>
+
+<script src="js/config.js"></script>
+<script src="js/budgets.js"></script>
+
+<script>
+function goBack() {
+    window.location.href = "dashboard.html";
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Category Rules</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body>
+
+<header class="top-bar">
+    <h2>🗂️ Category Rules</h2>
+    <button onclick="goBack()" class="logout-btn">Back</button>
+</header>
+
+<section class="grid">
+
+    <!-- ADD RULE -->
+    <div class="box">
+        <h3>➕ Add Category Rule</h3>
+
+        <label>Category Name</label>
+        <input type="text" id="categoryName" placeholder="Food / Travel / Shopping">
+
+        <label>Keywords (comma separated)</label>
+        <input type="text" id="keywords" placeholder="swiggy, zomato, uber">
+
+        <button onclick="addRule()">Add Rule</button>
+
+        <p id="msg"></p>
+    </div>
+
+    <!-- RULE LIST -->
+    <div class="box">
+        <h3>📋 My Category Rules</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Keywords</th>
+                </tr>
+            </thead>
+            <tbody id="rules-table"></tbody>
+        </table>
+    </div>
+
+</section>
+
+<script src="js/config.js"></script>
+<script src="js/category_rules.js"></script>
+
+<script>
+function goBack() {
+    window.location.href = "dashboard.html";
+}
+</script>
+
+</body>
+</html>

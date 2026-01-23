@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+
+# Environment
+venv/
+.env
+
+# Database
+*.db
+
+# Ignore frontend (for now)
+frontend/
+
+# Ignore old demo project
+fastapi_project/
+
+# IDE
+.vscode/
+.idea/
