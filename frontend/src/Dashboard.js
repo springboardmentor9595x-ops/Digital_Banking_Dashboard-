@@ -1,7 +1,14 @@
 import { useState, useEffect } from 'react'; 
-import { getDashboard, deleteAccount} from './api';
-import AddAccountModal from './components/AddAccountModal';
+import { getDashboard, deleteAccount, updateTransactionCategory, deleteTransaction} from './api'; // API function to update transaction category 
 import { showSuccess, showError, showConfirm } from './utils/toast';   // Notification library
+
+import { CATEGORIES } from './constants/categories';  // Predefined categories
+
+import AddTransactionModal from './components/AddTransactionModal'; // Add Transaction Modal
+import CategoryBadge from './components/CategoryBadge';     // Category badge component
+import AddAccountModal from './components/AddAccountModal';
+import UploadCSVModal from './components/UploadCSVModal'; // Upload CSV Modal
+
 
 function Dashboard({ onLogout }) {
   // ==========================================
@@ -11,30 +18,54 @@ function Dashboard({ onLogout }) {
   const [data, setData] = useState(null);  
   const [loading, setLoading] = useState(true);  
   const [view, setView] = useState('dashboard');  // 'dashboard' | 'account'
+  const [isTxnModalOpen, setIsTxnModalOpen] = useState(false); // Add Transaction Modal
+  const [isCSVModalOpen, setIsCSVModalOpen] = useState(false); // Upload CSV Modal
 
   // ==========================================
   // DELETE ACCOUNT HANDLER
   // ==========================================
-  const handleDeleteAccount = async (accountId) => {
-    const handleDeleteAccount = (accountId) => {
-      showConfirm('Delete this bank account permanently?', async () => {
-        try {
-          await deleteAccount(accountId);
-          showSuccess('Account deleted');
-          loadData();
-        } catch (error) {
-          console.error(error);
-          // error toast is already handled globally
-        }
-      });
-    };
 
+  const handleDeleteAccount = async (accountId) => {
+  showConfirm('Delete this bank account permanently?', async () => {
     try {
       await deleteAccount(accountId);
       showSuccess('Account deleted');
-      loadData();
+      loadData(); // refresh dashboard
     } catch (error) {
-      // showError('Failed to delete account');
+      console.error(error);
+      showError('Failed to delete account');
+    }
+  });
+};
+
+  // ==========================================
+  // DELETE TRANSACTION HANDLER
+  // ==========================================
+
+  const handleDeleteTransaction = async (transactionId) => {
+    showConfirm('Delete this transaction permanently?', async () => {
+      try {
+        await deleteTransaction(transactionId);
+        showSuccess('Transaction deleted');
+        loadData(); // refresh dashboard
+      } catch (error) {
+        console.error(error);
+        showError('Failed to delete transaction');
+      }
+    });
+  };
+
+  // ========================================== 
+  // CATEGORY UPDATE HANDLER
+  // ==========================================
+  const handleCategoryChange = async (transactionId, newCategory) => {
+    try {
+      await updateTransactionCategory(transactionId, newCategory);
+      showSuccess('Category updated');
+      loadData(); // refresh dashboard
+    } catch (error) {
+      console.error(error);
+      showError('Failed to update category');
     }
   };
 
@@ -43,10 +74,10 @@ function Dashboard({ onLogout }) {
   const [searchTerm, setSearchTerm] = useState('');      
   const [isModalOpen, setIsModalOpen] = useState(false);       
 
+
   // ==========================================
   // LOAD DATA WHEN COMPONENT MOUNTS
   // ==========================================
-  
   useEffect(() => {
     loadData();
   }, []);  
@@ -55,6 +86,16 @@ function Dashboard({ onLogout }) {
     try {
       const response = await getDashboard();
       setData(response.data);
+      if (selectedAccount) {
+        const updatedAccount = response.data.accounts.find(
+          (acc) => acc.id === selectedAccount.id
+        );
+
+        if (updatedAccount) {
+          setSelectedAccount(updatedAccount);
+        }
+      }
+
     } catch (err) {
       alert('Failed to load data');
       console.error(err);
@@ -190,6 +231,7 @@ function Dashboard({ onLogout }) {
             Logout
           </button>
         </div>
+        
 
         {/* Account Card */}
         <div className="bg-white rounded-2xl shadow p-6 mb-6">
@@ -200,16 +242,33 @@ function Dashboard({ onLogout }) {
             {selectedAccount.account_type} • {selectedAccount.masked_account}
           </p>
           <p className="text-3xl font-bold mt-4">
-            ₹{selectedAccount.balance}
+            {formatMoney(selectedAccount.balance)}
           </p>
         </div>
 
         {/* Transactions */}
         <div className="bg-white rounded-2xl shadow p-6">
-          <h2 className="text-xl font-bold mb-4">
-            Transactions
-          </h2>
+          <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">Transactions</h2>
+            <div className="flex-1"></div>
+          <button 
+            onClick={() => setIsTxnModalOpen(true)}
+            className="bg-indigo-600 text-white px-4 py-2 rounded"
+          >
+            + Add Transaction
+          </button>
+          
+          <div className="flex flex-col items-end gap-1 min-w-[120px]">
+          <button
+            onClick={() => setIsCSVModalOpen(true)}
+            className="bg-gray-600 text-white px-4 py-2 rounded "
+          >
+            Upload CSV
+          </button>
+        </div>
+        </div>
 
+            
           {filteredTransactions.length === 0 ? (
             <p className="text-gray-500 text-center py-8">
               No transactions for this account
@@ -217,31 +276,76 @@ function Dashboard({ onLogout }) {
           ) : (
             filteredTransactions.map((txn) => (
               <div
-              key={txn.id}
-              className="flex justify-between items-center p-4 border-b"
+                key={txn.id}
+                className="flex items-center p-4 border-b"
               >
-                <div>
-                  <p className="font-medium">
-                    {txn.description || txn.merchant}
 
+                <div className="flex-1">
+                  <p className="font-medium">
+                    {txn.merchant || txn.description}
+                      {txn.description && (
+                        <p className="text-xs text-gray-400">
+                          {txn.description}
+                        </p>
+                      )}
                   </p>
-                  <p className="text-sm text-gray-500">
-                     {formatDate(txn.txn_date)} • {txn.category}
-                  </p>
+                  <p className="text-sm text-gray-500 flex items-center gap-2">
+                  {formatDate(txn.txn_date)}
+
+                  <CategoryBadge category={txn.category || 'Others'} />
+
+                  <select
+                    value={txn.category || 'Others'}
+                    onChange={(e) =>
+                      handleCategoryChange(txn.id, e.target.value)
+                    }
+                    className="text-xs border rounded px-1 py-0.5"
+                    title="Change category"
+                  >
+                    {CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </p>
                 </div>
 
-                <p
-                  className={`font-bold ${
-                    txn.txn_type === 'credit'
-                    ? 'text-green-600'
-                    : 'text-red-600'
-                  }`}
+              <div className="flex flex-col items-end gap-1 min-w-[120px]">
+                  <p
+                    className={`font-bold ${
+                      txn.txn_type === 'credit'
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                    }`}
                   >
-                  {txn.txn_type === 'credit' ? '+' : '-'}₹{txn.amount}
-                </p>
+                    {txn.txn_type === 'credit' ? '+' : '-'}₹{txn.amount}
+                  </p>
+
+                  <button
+                    onClick={() => handleDeleteTransaction(txn.id)}
+                    className="text-xs text-red-600 hover:underline"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             ))
           )}
+          <AddTransactionModal
+            isOpen={isTxnModalOpen}
+            onClose={() => setIsTxnModalOpen(false)}
+            accountId={selectedAccount.id}
+            onTransactionAdded={loadData}
+          />
+          <UploadCSVModal
+            isOpen={isCSVModalOpen}
+            onClose={() => setIsCSVModalOpen(false)}
+            accountId={selectedAccount.id}
+            onUploadSuccess={loadData}
+          />
+
+
         </div>
       </div>
     </div>
