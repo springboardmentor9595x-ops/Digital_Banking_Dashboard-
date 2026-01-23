@@ -5,6 +5,7 @@ from sqlalchemy import select, func
 import csv
 import io
 from datetime import datetime
+from decimal import Decimal, InvalidOperation # for precise money handling
 
 from ..auth.jwt_handler import get_current_user
 from ..database import get_db
@@ -25,7 +26,7 @@ async def create_transaction(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    # SECURITY: verify account belongs to user
+    # 1. Verify account belongs to user
     account_query = select(Account).where(
         Account.id == transaction.account_id,
         Account.user_id == current_user.id,
@@ -39,6 +40,7 @@ async def create_transaction(
             detail="Account not found or access denied",
         )
 
+    # 2. Create transaction
     new_transaction = Transaction(
         account_id=transaction.account_id,
         description=transaction.description,
@@ -52,6 +54,15 @@ async def create_transaction(
     )
 
     db.add(new_transaction)
+
+    # 3. Update account balance
+    amount = Decimal(str(new_transaction.amount))
+    if new_transaction.txn_type == TransactionType.credit:
+        account.balance += amount
+    else:
+        account.balance -= amount
+
+    # 4. Commit once
     await db.commit()
     await db.refresh(new_transaction)
 
@@ -94,14 +105,15 @@ async def upload_transactions_csv(
     for row in csv_reader:
         try:
             txn_type = TransactionType(row["txn_type"].lower())
-        except ValueError:
-            continue  # Skip invalid txn_type rows
+            amount = Decimal(str(row["amount"]))
+        except (InvalidOperation, ValueError, KeyError):
+            continue  
 
         txn = Transaction(
             account_id=account_id,
             description=row.get("description"),
             category=row.get("category"),
-            amount=float(row["amount"]),
+            amount=amount,
             currency=row.get("currency", "INR"),
             txn_type=txn_type,
             merchant=row.get("merchant"),
@@ -113,6 +125,12 @@ async def upload_transactions_csv(
             ),
         )
         db.add(txn)
+
+        if txn_type == TransactionType.credit:
+            account.balance += amount
+        else:
+            account.balance -= amount
+
         transactions_created += 1
 
 
@@ -221,3 +239,77 @@ async def transaction_summary(
         "total_expenses": total_expenses,
         "net_flow": total_income - total_expenses,
     }
+
+# =====================================================
+# 6. UPDATE TRANSACTION CATEGORY
+# =====================================================
+@router.put("/{transaction_id}", status_code=200)
+async def update_transaction_category(
+    transaction_id: int,
+    payload: dict,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    query = select(Transaction).where(Transaction.id == transaction_id)
+    result = await db.execute(query)
+    txn = result.scalars().first()
+
+    if not txn:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    # verify ownership
+    account_query = select(Account).where(
+        Account.id == txn.account_id,
+        Account.user_id == current_user.id,
+    )
+    acc_result = await db.execute(account_query)
+    if not acc_result.scalars().first():
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    txn.category = payload.get("category", txn.category)
+
+    await db.commit()
+    return {"message": "Category updated"}
+
+# ==========================================
+# Delete Transaction
+# ==========================================
+@router.delete("/{transaction_id}", status_code=200)
+async def delete_transaction(
+    transaction_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Transaction).where(Transaction.id == transaction_id)
+    )
+    txn = result.scalars().first()
+
+    if not txn:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    # Verify ownership
+    acc_result = await db.execute(
+        select(Account).where(
+            Account.id == txn.account_id,
+            Account.user_id == current_user.id,
+        )
+    )
+    account = acc_result.scalars().first()
+
+    if not account:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    # Reverse balance impact
+    amount = Decimal(str(txn.amount))
+
+    if txn.txn_type == TransactionType.credit:
+        account.balance -= amount
+    else:
+        account.balance += amount
+
+
+    await db.delete(txn)
+    await db.commit()
+
+    return {"message": "Transaction deleted"}
