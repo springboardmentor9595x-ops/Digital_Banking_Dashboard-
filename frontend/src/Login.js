@@ -40,10 +40,10 @@ function Login({ onLoginSuccess, onGoToRegister }) {
 
     } catch (err) {
       const message = err.response?.data?.detail || 'Login failed';
-      setError(message);
-      // showError(message);
+      // setError(message);
+      showError(message);
     } finally {
-         // Hide loading state (runs whether success or failure)
+      // Hide loading state (runs whether success or failure)
       setLoading(false);
     }
   };
