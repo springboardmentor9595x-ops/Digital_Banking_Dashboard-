@@ -60,6 +60,36 @@ export const deleteAccount = (accountId) => {
   return API.delete(`/accounts/${accountId}`);
 };
 
+// CREATE TRANSACTION
+export const createTransaction = (data) => {
+  return API.post('/transactions/', data);
+};
+
+
+// UPDATE TRANSACTION CATEGORY
+export const updateTransactionCategory = (transactionId, category) => {
+  return API.put(`/transactions/${transactionId}`, {
+    category,
+  });
+};
+// DELETE TRANSACTION
+export const deleteTransaction = (transactionId) => {
+  return API.delete(`/transactions/${transactionId}`);
+};
+
+//  UPLOAD TRANSACTIONS VIA CSV
+export const uploadTransactionsCSV = (accountId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return API.post(`/transactions/upload-csv/${accountId}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+
 //  Global error handling (optional)
 API.interceptors.response.use(
   (response) => response,
