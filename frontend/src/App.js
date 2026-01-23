@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import Login from './Login';
 import Register from './Register';
 import Dashboard from './Dashboard';
+import { ToastContainer } from 'react-toastify';  // Notification library
+import 'react-toastify/dist/ReactToastify.css';   // Notification styles
 
 function App() {
   // Which page to show
@@ -30,24 +32,30 @@ function App() {
   };
 
   // Render
-  if (page === 'register') {
-    return (
-      <Register
-        onRegisterSuccess={handleRegisterSuccess}
-        onGoToLogin={() => setPage('login')}
-      />
-    );
-  }
+ return (
+    <>
+      <ToastContainer />
 
-  if (page === 'dashboard') {
-    return <Dashboard onLogout={handleLogout} />;
-  }
+      {page === 'login' && (
+        <Login
+          onLoginSuccess={handleLoginSuccess}
+          onGoToRegister={() => setPage('register')}
+        />
+      )}
 
-  return (
-    <Login
-      onLoginSuccess={handleLoginSuccess}
-      onGoToRegister={() => setPage('register')}
-    />
+      {page === 'register' && (
+        <Register
+          onRegisterSuccess={handleRegisterSuccess}
+          onGoToLogin={() => setPage('login')}
+        />
+      )}
+
+      {page === 'dashboard' && (
+        <Dashboard onLogout={handleLogout} />
+      )}
+
+
+    </> 
   );
 }
 
