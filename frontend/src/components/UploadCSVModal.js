@@ -16,11 +16,12 @@ function UploadCSVModal({ isOpen, onClose, accountId, onUploadSuccess }) {
 
     try {
       setLoading(true);
-      await uploadTransactionsCSV(accountId, file);
-      showSuccess('CSV uploaded successfully');
-      setFile(null);
+      const res = await uploadTransactionsCSV(accountId, file);
+      showSuccess(res.message || 'CSV uploaded');
+      onUploadSuccess();   //  refresh dashboard
       onClose();
-      onUploadSuccess(); // reload dashboard
+
+      setFile(null);
     } catch (err) {
       console.error(err);
       showError('Failed to upload CSV');

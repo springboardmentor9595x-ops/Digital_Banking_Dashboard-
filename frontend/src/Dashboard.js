@@ -257,7 +257,14 @@ function Dashboard({ onLogout }) {
           >
             + Add Transaction
           </button>
-          
+          <a
+            href="/sample-transactions.csv"
+            download
+            className="bg-gray-300 px-3 py-2 rounded"
+          >
+            Download CSV Template
+          </a>
+
           <div className="flex flex-col items-end gap-1 min-w-[120px]">
           <button
             onClick={() => setIsCSVModalOpen(true)}

@@ -8,6 +8,7 @@ function AddTransactionModal({
   accountId,
   onTransactionAdded,
 }) {
+  const [merchant, setMerchant] = useState('');
     const INITIAL_FORM_STATE = {
     amount: '',
     txn_type: 'debit',
@@ -25,6 +26,10 @@ function AddTransactionModal({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.merchant || !formData.merchant.trim()) {
+    showError('Merchant is required');
+    return;
+  }
 
     try {
         await createTransaction({
@@ -33,7 +38,7 @@ function AddTransactionModal({
             txn_type: formData.txn_type,
             category: formData.category,
             description: formData.description || null,
-            merchant: formData.merchant,
+            merchant: formData.merchant.trim(),
             currency: formData.currency,
             txn_date: formData.txn_date,
             posted_date: formData.posted_date || null,
@@ -41,7 +46,7 @@ function AddTransactionModal({
 
         showSuccess('Transaction added successfully');
 
-        setFormData(INITIAL_FORM_STATE); // ✅ RESET FORM
+        setFormData(INITIAL_FORM_STATE); 
         onTransactionAdded();
         onClose();
         } catch (error) {
@@ -96,6 +101,8 @@ function AddTransactionModal({
             <option>Bills</option>
             <option>Shopping</option>
             <option>Entertainment</option>
+            <option>Health</option>
+            <option>Education</option>
             <option>Others</option>
           </select>
 
@@ -121,6 +128,10 @@ function AddTransactionModal({
                 setFormData({ ...formData, merchant: e.target.value })
             }
             />
+            <p className="text-xs text-gray-500">
+              Merchant is required for categorization
+            </p>
+
 
 
           {/* Transaction Date */}
