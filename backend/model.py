@@ -10,7 +10,9 @@ Text,
 ForeignKey,
 Enum,
 )
-
+from sqlalchemy import DateTime
+from datetime import timezone
+from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.sql import func
 from .database import Base
 import enum
@@ -95,6 +97,16 @@ class Transaction(Base):
     """Transaction model - stores financial transactions"""
 
     __tablename__ = "transactions"
+    __table_args__ = (
+        UniqueConstraint(
+            "account_id",
+            "amount",
+            "txn_type",
+            "merchant",
+            "txn_date",
+            name="unique_transaction_per_day",
+        ),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     account_id = Column(
@@ -110,7 +122,7 @@ class Transaction(Base):
     )
     merchant = Column(String(50), nullable=True)
     txn_date = Column(DateTime, nullable=False)
-    posted_date = Column(DateTime, nullable=True)
+    posted_date = Column(DateTime(timezone=True))
 
 
 class Budget(Base):

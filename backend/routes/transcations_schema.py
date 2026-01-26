@@ -13,7 +13,7 @@ class TransactionBase(BaseModel):
     txn_type: str = Field(
         ..., pattern="^(debit|credit)$", description="Must be 'debit' or 'credit'"
     )
-    merchant: Optional[str] = Field(None, max_length=50)
+    merchant: str = Field(None, max_length=50, min_length=1)
     txn_date: datetime
     posted_date: Optional[datetime] = None
 
@@ -28,7 +28,7 @@ class TransactionResponse(BaseModel):
     amount: float
     currency: str
     txn_type: str
-    merchant: Optional[str]
+    merchant: str
     txn_date: datetime
     posted_date: Optional[datetime]
 
