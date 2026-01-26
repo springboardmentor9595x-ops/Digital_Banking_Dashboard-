@@ -4,18 +4,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 import csv
 import io
-from datetime import datetime
+from datetime import datetime, timezone # for handling dates
 from decimal import Decimal, InvalidOperation # for precise money handling
 
 from ..auth.jwt_handler import get_current_user
 from ..database import get_db
 from ..model import Transaction, TransactionType, Account, User
-from ..routes.transcations_schema import (
-    TransactionResponse,
-    TransactionCreate,
-)
-
+from ..routes.transcations_schema import (TransactionResponse, TransactionCreate, )
+from ..services.categorizer import auto_assign_category
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
+
+
+## Helper function to parse various date formats
+def parse_date(date_str: str) -> datetime:
+    for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(date_str, fmt)
+        except ValueError:
+            continue
+    raise ValueError(f"Invalid date format: {date_str}")
 
 # =====================================================
 # 1. CREATE TRANSACTION
@@ -23,7 +30,7 @@ router = APIRouter(prefix="/transactions", tags=["Transactions"])
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_transaction(
     transaction: TransactionCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user), 
     db: AsyncSession = Depends(get_db),
 ):
     # 1. Verify account belongs to user
@@ -39,20 +46,38 @@ async def create_transaction(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account not found or access denied",
         )
+    category = transaction.category
+    if not category:
+        category = auto_assign_category(
+            f"{transaction.merchant} {transaction.description or ''}"
+        )
+    duplicate_query = select(Transaction).where(
+        Transaction.account_id == transaction.account_id,
+        Transaction.amount == transaction.amount,
+        Transaction.txn_type == TransactionType(transaction.txn_type),
+        Transaction.merchant == transaction.merchant,
+        Transaction.txn_date == transaction.txn_date,
+    )
+
+    existing = await db.execute(duplicate_query)
+    if existing.scalars().first():
+        raise HTTPException(
+            status_code=409,
+            detail="Duplicate transaction detected",
+        )
 
     # 2. Create transaction
     new_transaction = Transaction(
         account_id=transaction.account_id,
         description=transaction.description,
-        category=transaction.category,
+        category=category,
         amount=transaction.amount,
         currency=transaction.currency,
         txn_type=TransactionType(transaction.txn_type),
         merchant=transaction.merchant,
         txn_date=transaction.txn_date,
-        posted_date=transaction.posted_date,
+        posted_date=datetime.now(timezone.utc),
     )
-
     db.add(new_transaction)
 
     # 3. Update account balance
@@ -76,6 +101,7 @@ async def create_transaction(
 # =====================================================
 @router.post("/upload-csv/{account_id}", status_code=status.HTTP_201_CREATED)
 async def upload_transactions_csv(
+    
     account_id: int,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
@@ -97,50 +123,91 @@ async def upload_transactions_csv(
         contents = await file.read()
         decoded = contents.decode("utf-8")
         csv_reader = csv.DictReader(io.StringIO(decoded))
+        required_columns = {
+        "amount", "txn_type", "merchant", "txn_date"
+        }
+        if not required_columns.issubset(csv_reader.fieldnames):
+            raise HTTPException(
+                status_code=400,
+                detail=f"CSV must contain columns: {required_columns}"
+            )
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid CSV file")
 
     transactions_created = 0
+    rows_skipped = 0
 
     for row in csv_reader:
         try:
+            print("CSV ROW:", row)  
+            merchant = row.get("merchant")
+            if not merchant or not merchant.strip():
+                rows_skipped += 1
+                continue
+
             txn_type = TransactionType(row["txn_type"].lower())
             amount = Decimal(str(row["amount"]))
-        except (InvalidOperation, ValueError, KeyError):
-            continue  
+            txn_date = parse_date(row["txn_date"])
 
-        txn = Transaction(
-            account_id=account_id,
-            description=row.get("description"),
-            category=row.get("category"),
-            amount=amount,
-            currency=row.get("currency", "INR"),
-            txn_type=txn_type,
-            merchant=row.get("merchant"),
-            txn_date=datetime.fromisoformat(row["txn_date"]),
-            posted_date=(
-                datetime.fromisoformat(row["posted_date"])
-                if row.get("posted_date")
-                else None
-            ),
+
+            category = (row.get("category") or "").strip()
+            if not category:
+
+                category = auto_assign_category(
+                    f"{merchant} {row.get('description', '')}"
+                )
+            duplicate_query = select(Transaction).where(
+                Transaction.account_id == account_id,
+                Transaction.amount == amount,
+                Transaction.txn_type == txn_type,
+                Transaction.merchant == merchant,
+                Transaction.txn_date == txn_date,
+            )
+
+            existing = await db.execute(duplicate_query)
+            if existing.scalars().first():
+                rows_skipped += 1
+                continue
+
+            txn = Transaction(
+                account_id=account_id,
+                description=row.get("description"),
+                category=category,
+                amount=amount,
+                currency=row.get("currency", "INR"),
+                txn_type=txn_type,
+                merchant=merchant,
+                txn_date=txn_date,
+                posted_date=datetime.now(timezone.utc),
+            )
+
+            db.add(txn)
+
+            if txn_type == TransactionType.credit:
+                account.balance += amount
+            else:
+                account.balance -= amount
+
+            transactions_created += 1
+
+        except Exception as e:
+            print("CSV SKIPPED ROW:", row, "ERROR:", e)
+            rows_skipped += 1
+            continue
+
+    if transactions_created == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="No valid transactions found. Check CSV format or dates."
         )
-        db.add(txn)
 
-        if txn_type == TransactionType.credit:
-            account.balance += amount
-        else:
-            account.balance -= amount
-
-        transactions_created += 1
-
-
-    if transactions_created > 0:
-        await db.commit()
+    await db.commit()
 
     return {
-        "message": f"Successfully imported {transactions_created} transactions",
+        "message": f"Imported {transactions_created} transactions, skipped {rows_skipped} duplicates/invalid rows",
         "account_id": account_id,
     }
+
 
 # =====================================================
 # 3. LIST TRANSACTIONS
