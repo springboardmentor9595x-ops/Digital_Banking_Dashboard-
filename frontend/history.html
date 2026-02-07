@@ -4,8 +4,32 @@
     <meta charset="UTF-8">
     <title>Transaction History</title>
 
-    <!-- ✅ Use same CSS as Dashboard / Budgets / Bills -->
+    <!-- Reuse dashboard styling -->
     <link rel="stylesheet" href="css/dashboard.css">
+
+    <style>
+        /* ===== CATEGORY BADGES ===== */
+        .category-badge {
+            padding: 4px 10px;
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+
+        .badge-green { background: #22c55e; color: white; }
+        .badge-blue { background: #2563eb; color: white; }
+        .badge-purple { background: #7c3aed; color: white; }
+        .badge-grey { background: #64748b; color: white; }
+
+        select {
+            margin-top: 4px;
+            padding: 4px 6px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+        }
+    </style>
 </head>
 
 <body>
@@ -13,7 +37,7 @@
 <!-- ===== TOP BAR ===== -->
 <header class="top-bar">
     <h2>📜 Transaction History</h2>
-    <button onclick="goBack()" class="logout-btn">Back</button>
+    <button onclick="goBack()" class="logout-btn">⬅ Dashboard</button>
 </header>
 
 <!-- ===== CONTENT ===== -->
@@ -27,15 +51,17 @@
                 <tr>
                     <th>Date</th>
                     <th>Description</th>
+                    <th>Bank</th>
                     <th>Category</th>
                     <th>Type</th>
                     <th class="right">Amount</th>
                 </tr>
             </thead>
 
-            <tbody id="historyTableBody">
+            <!-- ✅ CORRECT ID -->
+            <tbody id="history-body">
                 <tr>
-                    <td colspan="5">Loading...</td>
+                    <td colspan="6">Loading...</td>
                 </tr>
             </tbody>
         </table>
@@ -45,12 +71,109 @@
 
 <!-- ===== SCRIPTS ===== -->
 <script src="js/config.js"></script>
-<script src="js/history.js"></script>
 
 <script>
+async function loadHistory() {
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+        alert("Please login again");
+        window.location.href = "login.html";
+        return;
+    }
+
+    try {
+        const res = await fetch(`${BASE_URL}/transactions/my-history`, {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        const data = await res.json();
+        const tbody = document.getElementById("history-body");
+        tbody.innerHTML = "";
+
+        if (!data.transactions || data.transactions.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6">No transactions found</td>
+                </tr>
+            `;
+            return;
+        }
+
+        data.transactions.forEach(tx => {
+            const tr = document.createElement("tr");
+
+            const date = tx.date
+                ? new Date(tx.date).toLocaleString()
+                : "-";
+
+            // 🎨 Category badge color
+            let badgeClass = "badge-grey";
+            if (tx.category === "Food") badgeClass = "badge-green";
+            if (tx.category === "Shopping") badgeClass = "badge-blue";
+            if (tx.category === "Transport") badgeClass = "badge-purple";
+
+            tr.innerHTML = `
+                <td>${date}</td>
+                <td>${tx.description}</td>
+                <td>${tx.bank_name}</td>
+
+                <td>
+                    <span class="category-badge ${badgeClass}">
+                        ${tx.category}
+                    </span>
+                    <br>
+                    <select onchange="updateCategory(${tx.id}, this.value)">
+                        <option ${tx.category === "Food" ? "selected" : ""}>Food</option>
+                        <option ${tx.category === "Shopping" ? "selected" : ""}>Shopping</option>
+                        <option ${tx.category === "Transport" ? "selected" : ""}>Transport</option>
+                        <option ${tx.category === "Others" ? "selected" : ""}>Others</option>
+                    </select>
+                </td>
+
+                <td>
+                    <span class="${tx.type === 'DEBIT' ? 'debit' : 'credit'}">
+                        ${tx.type}
+                    </span>
+                </td>
+
+                <td class="${tx.type === 'DEBIT' ? 'debit' : 'credit'}">
+                    ${tx.type === 'DEBIT' ? '₹ ' + tx.amount : '+ ₹ ' + tx.amount}
+                </td>
+
+            `;
+
+            tbody.appendChild(tr);
+        });
+
+    } catch (err) {
+        console.error(err);
+        alert("Failed to load transaction history");
+    }
+}
+
+// 🔁 UPDATE CATEGORY API
+async function updateCategory(transactionId, category) {
+    const token = localStorage.getItem("access_token");
+
+    await fetch(`${BASE_URL}/transactions/${transactionId}/category`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ category })
+    });
+}
+
 function goBack() {
     window.location.href = "dashboard.html";
 }
+
+// ✅ LOAD ON PAGE OPEN
+loadHistory();
 </script>
 
 </body>

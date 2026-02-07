@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Account</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+
+    <style>
+        body {
+            background: #f5f7fb;
+            font-family: "Segoe UI", sans-serif;
+            margin: 0;
+        }
+
+        /* ===== HEADER ===== */
+        .top-bar {
+            background: #1e3a8a;
+            color: white;
+            padding: 16px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: #1d4ed8;
+        }
+
+        /* ===== FORM CONTAINER ===== */
+        .container {
+            max-width: 500px;
+            margin: 50px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 14px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #1e3a8a;
+        }
+
+        label {
+            font-weight: 600;
+            display: block;
+            margin-top: 15px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+        }
+
+        button.create-btn {
+            margin-top: 25px;
+            width: 100%;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button.create-btn:hover {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="top-bar">
+    <h2>➕ Add New Account</h2>
+    <button class="back-btn" onclick="goBack()">⬅ My Accounts</button>
+</header>
+
+<!-- ===== FORM ===== -->
+<div class="container">
+    <h2>Add Account Details</h2>
+
+    <label>Bank Name</label>
+    <input type="text" id="bank_name" placeholder="SBI / HDFC / AXIS">
+
+    <label>Account Type</label>
+    <select id="account_type">
+        <option value="savings">Savings</option>
+        <option value="current">Current</option>
+    </select>
+
+    <label>Initial Balance (₹)</label>
+    <input type="number" id="balance" placeholder="5000">
+
+    <label>Currency</label>
+    <input type="text" id="currency" value="INR">
+
+    <button class="create-btn" onclick="createAccount()">Create Account</button>
+</div>
+
+<script src="js/config.js"></script>
+
+<script>
+    function goBack() {
+        window.location.href = "accounts.html";
+    }
+
+    async function createAccount() {
+        const token = localStorage.getItem("access_token");
+
+        const data = {
+            bank_name: document.getElementById("bank_name").value.trim(),
+            account_type: document.getElementById("account_type").value,
+            balance: Number(document.getElementById("balance").value),
+            currency: document.getElementById("currency").value.trim()
+        };
+
+        if (!data.bank_name || !data.balance) {
+            alert("Please fill all required fields");
+            return;
+        }
+
+        const res = await fetch(`${BASE_URL}/accounts/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+            alert("Account created successfully");
+            window.location.href = "accounts.html";
+        } else {
+            alert("Failed to create account");
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -1,18 +1,21 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import sessionmaker
 
-# ✅ DEFINE DATABASE URL (THIS WAS MISSING)
-DATABASE_URL = "postgresql://postgres:postgres123@localhost:5432/banking_db"
+from app.db.base_class import Base  # ✅ USE SINGLE BASE
 
-engine = create_engine(DATABASE_URL)
+# ✅ CORRECT SQLite DB FILE
+DATABASE_URL = "sqlite:///./bank.db"
+
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False}
+)
 
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine
 )
-
-Base = declarative_base()
 
 # ✅ Dependency
 def get_db():

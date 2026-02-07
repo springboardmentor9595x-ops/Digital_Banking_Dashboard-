@@ -4,121 +4,653 @@
     <meta charset="UTF-8">
     <title>My Bank Dashboard</title>
     <link rel="stylesheet" href="css/dashboard.css">
+
+    <style>
+        /* ===== LAYOUT ===== */
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 220px;
+            background-color: #1e3a8a;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-title {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 25px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            flex: 1;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 15px;
+        }
+
+        .sidebar-menu a {
+            text-decoration: none;
+            color: white;
+            font-size: 16px;
+            display: block;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .sidebar-menu a:hover {
+            background: #2563eb;
+        }
+
+        /* ===== LOGOUT BOTTOM ===== */
+        .sidebar-logout {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .sidebar-logout:hover {
+            background: #b91c1c;
+        }
+
+        /* ===== MAIN ===== */
+        .main-content {
+            flex: 1;
+            background: #f5f7fb;
+            position: relative;
+        }
+
+        /* ===== TOP BAR ===== */
+        .top-bar {
+            background: #1e3a8a;   /* solid blue like image 2 */
+            padding: 14px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: none;
+        }
+        .top-bar h2 {
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .icon-btn {
+            background: #2563eb;
+            color: white;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .icon-btn:hover {
+            background: #1d4ed8;
+        }
+
+        /* 🔔 NOTIFICATION POPUP */
+        .notification-popup {
+            position: absolute;
+            top: 70px;
+            right: 30px;
+            width: 260px;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+            padding: 14px;
+            display: none;
+            z-index: 999;
+        }
+
+        .notification-popup h4 {
+            margin-bottom: 10px;
+            font-size: 16px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 6px;
+        }
+
+        .notification-popup ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .notification-popup li {
+            padding: 8px 4px;
+            font-size: 14px;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .notification-popup li:last-child {
+            border-bottom: none;
+        }
+        /* ===== CHANGE PASSWORD MODAL ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal-box {
+            background: white;
+            padding: 22px;
+            border-radius: 14px;
+            width: 300px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+        }
+
+        .modal-box h3 {
+            margin-bottom: 10px;
+        }
+
+        .modal-box button {
+            margin-top: 15px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            cursor: pointer;
+        }
+        /* ===== DASHBOARD TITLE FIX ===== */
+        .top-bar h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1e3a8a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        /* ===== FORCE DASHBOARD TITLE VISIBILITY ===== */
+        .top-bar h2 {
+            color: #ffffff !important;   /* force white text */
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        /* ===== INCREASE TOP BAR HEIGHT ===== */
+        .top-bar {
+            min-height: 60px;        /* increase blue bar height */
+            padding: 18px 25px;     /* more vertical space */
+        }
+        /* ===== SETTINGS MODAL ===== */
+        .settings-modal {
+            position: absolute;
+            top: 70px;
+            right: 120px;
+            width: 280px;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+        }
+
+        .settings-header {
+            background: #1e3a8a;
+            color: white;
+            padding: 14px;
+            border-radius: 14px 14px 0 0;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .settings-item {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f1f1f1;
+            cursor: pointer;
+        }
+
+        .settings-item p {
+            font-size: 12px;
+            color: #64748b;
+            margin: 4px 0 0;
+        }
+
+        .settings-item:hover {
+            background: #f5f7fb;
+        }
+
+        .settings-item.logout {
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            cursor: pointer;
+        }
+        /* ===== TOAST POPUP ===== */
+        .toast {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: #1e3a8a;
+            color: white;
+            padding: 14px 18px;
+            border-radius: 12px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+            font-size: 14px;
+            display: none;
+            z-index: 3000;
+            animation: slideIn 0.4s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+    </style>
 </head>
 
 <body>
 
-<header class="top-bar">
-    <h2>🏦 My Bank Dashboard</h2>
-    <button onclick="logout()" class="logout-btn">Logout</button>
-</header>
+<div class="layout">
 
-<!-- ================= SUMMARY CARDS ================= -->
-<section class="summary">
-    <div class="card">
-        <h4>Total Balance</h4>
-        <p id="total-balance">₹ 0</p>
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar">
+        <h2 class="sidebar-title">Menu</h2>
+
+        <ul class="sidebar-menu">
+            <li><a href="accounts.html">🏦 My Accounts</a></li>
+            <li><a href="transfer.html">💸 Transfer</a></li>
+            <li><a href="budgets.html">📊 Budgets</a></li>
+            <li><a href="bills.html">🧾 Bills</a></li>
+            <li><a href="category_rules.html">🗂️ Category Rules</a></li>
+            <li><a href="rewards.html">🎁 Rewards</a></li>
+        </ul>
+
+        <button class="sidebar-logout" onclick="logout()">🚪 Logout</button>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="main-content">
+
+        <!-- ===== TOP BAR ===== -->
+        <header class="top-bar">
+            <h2>🏦 My Bank Dashboard</h2>
+
+            <div class="top-actions">
+                <div class="icon-btn" onclick="showNotifications()">🔔</div>
+                <div class="icon-btn" onclick="toggleProfile()">👤</div>
+                <div class="icon-btn" onclick="toggleSettings()">⚙️</div>
+            </div>
+        </header>
+        <!-- 🚨 BUDGET ALERT MODAL (DASHBOARD ONLY) -->
+        <div id="budgetAlertModal" style="
+            display:none;
+            position: fixed;
+            top: 90px;
+            left: 50%;
+            transform: translateX(-50%) scale(0.9);
+            background: white;
+            padding: 22px 26px;
+            border-radius: 14px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.25);
+            z-index: 5000;
+            min-width: 380px;
+            text-align: center;
+            animation: popupFade 0.35s ease forwards;
+        ">
+            <div style="font-size:36px;">⚠️</div>
+            <h3 style="margin:10px 0;color:#b91c1c;">
+                Budget Limit Exceeded
+            </h3>
+            <p id="budgetAlertMessage" style="margin:10px 0 18px;color:#444;"></p>
+
+            <button onclick="acknowledgeBudgetAlert()" style="
+                padding:8px 20px;
+                border:none;
+                border-radius:8px;
+                background:#dc2626;
+                color:white;
+                font-weight:600;
+                cursor:pointer;
+            ">
+                OK
+            </button>
+        </div>
+
+        <style>
+        @keyframes popupFade {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) scale(0.85);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) scale(1);
+            }
+        }
+        </style>
+
+        <!-- 👤 PROFILE POPUP (FLOATING) -->
+        <div id="profilePopup" class="profile-popup">
+            <div class="profile-header">
+                <div class="profile-avatar">👤</div>
+                <div>
+                    <strong class="profile-name">Welcome, User</strong>
+                    <small class="profile-email">Banking Customer</small>
+                </div>
+            </div>
+
+    <div class="profile-item" onclick="goAccounts()">🏦 My Accounts</div>
+    <div class="profile-item" onclick="changePassword()">🔐 Change Password</div>
+    <div class="profile-item logout" onclick="logout()">🚪 Logout</div>
+</div>
+    <!-- ⚙️ SETTINGS MODAL -->
+    <div id="settingsModal" class="settings-modal">
+        <div class="settings-header">
+            ⚙️ Settings
+            <span class="close-btn" onclick="toggleSettings()">✖</span>
+        </div>
+
+        <div class="settings-item" onclick="openProfileFromSettings()">
+            👤 <strong>Profile</strong>
+            <p>View your basic account details</p>
+        </div>
+
+        <div class="settings-item" onclick="changePassword()">
+            🔐 <strong>Change Password</strong>
+            <p>Update your login password</p>
+        </div>
+
+        <div class="settings-item">
+            🔔 <strong>Notifications</strong>
+            <label>
+                <input type="checkbox" checked> Enable notifications
+            </label>
+        </div>
+
+        <div class="settings-item logout" onclick="logout()">
+            🚪 <strong>Logout</strong>
+        </div>
     </div>
+  
+        <!-- 🔔 NOTIFICATION POPUP -->
+        <!-- 🔔 NOTIFICATION POPUP -->
+        <div id="notificationPopup" class="notification-popup">
 
-    <div class="card income">
-        <h4>Total Income</h4>
-        <p id="total-income">₹ 0</p>
+            <div class="notif-header">
+                🔔 Notifications
+                <span class="notif-close" onclick="closeNotifications()">✖</span>
+            </div>
+
+            <div class="notif-item debit">
+                <span class="notif-icon">💳</span>
+                <div class="notif-info">
+                    <strong>Amount Debited</strong>
+                    <small>₹2,999 spent on Flight booking</small>
+            </div>
+            <span class="notif-time">Today</span>
+        </div>
+
+        <div class="notif-item info">
+            <span class="notif-icon">🍔</span>
+            <div class="notif-info">
+                <strong>New Transaction</strong>
+                <small>Zomato payment categorized as Food</small>
+            </div>
+            <span class="notif-time">Today</span>
+        </div>
+
+        <div class="notif-item warning">
+            <span class="notif-icon">📊</span>
+            <div class="notif-info">
+                <strong>Budget Update</strong>
+                <small>Shopping budget is 65% utilized</small>
+            </div>
+            <span class="notif-time">This week</span>
+        </div>
+
+        <div class="notif-item info">
+            <span class="notif-icon">🧾</span>
+            <div class="notif-info">
+                <strong>Transaction Recorded</strong>
+                <small>Amazon transaction saved successfully</small>
+            </div>
+            <span class="notif-time">This week</span>
+        </div>
+
+        <button class="notif-back-btn" onclick="handleNotificationBack(event)">
+            ⬅ Back
+        </button>
     </div>
+        <!-- ===== SUMMARY CARDS ===== -->
+        <section class="summary">
+            <div class="card">
+                <h4>Total Balance</h4>
+                <p id="total-balance">₹ 0</p>
+            </div>
 
-    <div class="card expense">
-        <h4>Total Expenses</h4>
-        <p id="total-expenses">₹ 0</p>
+            <div class="card income">
+                <h4>Total Income</h4>
+                <p id="total-income">₹ 0</p>
+            </div>
+
+            <div class="card expense">
+                <h4>Total Expenses</h4>
+                <p id="total-expenses">₹ 0</p>
+            </div>
+        </section>
+
+        <section class="summary">
+            <div class="card">
+                <h4>Total Budgets</h4>
+                <p id="total-budgets">0</p>
+            </div>
+
+            <div class="card expense">
+                <h4>Over Budget</h4>
+                <p id="over-budget-count">0</p>
+            </div>
+
+            <div class="card">
+                <h4>Budget Alert</h4>
+                <p id="budget-alert">All good 👍</p>
+            </div>
+        </section>
+
+        <section class="box">
+            <h3>📊 Income vs Expense</h3>
+            <canvas id="incomeExpenseChart" height="120"></canvas>
+        </section>
+
+        <section class="grid">
+            <div class="box">
+                <h3>📜 Recent Transactions</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-transactions"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <div class="actions">
+            <button onclick="goTransactions()">📜 View Transactions</button>
+        </div>
+
     </div>
-</section>
-
-<!-- ================= BUDGET SUMMARY (NEW ✅) ================= -->
-<section class="summary">
-    <div class="card">
-        <h4>Total Budgets</h4>
-        <p id="total-budgets">0</p>
-    </div>
-
-    <div class="card expense">
-        <h4>Over Budget</h4>
-        <p id="over-budget-count">0</p>
-    </div>
-
-    <div class="card">
-        <h4>Budget Alert</h4>
-        <p id="budget-alert">All good 👍</p>
-    </div>
-</section>
-
-<!-- ================= CHART ================= -->
-<section class="box">
-    <h3>📊 Income vs Expense</h3>
-    <canvas id="incomeExpenseChart" height="120"></canvas>
-</section>
-
-<!-- ================= MAIN GRID ================= -->
-<section class="grid">
-    <div class="box">
-        <h3>🏦 My Accounts</h3>
-        <ul id="accounts"></ul>
-    </div>
-
-    <div class="box">
-        <h3>📜 Recent Transactions</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Description</th>
-                    <th>Amount</th>
-                </tr>
-            </thead>
-            <tbody id="recent-transactions"></tbody>
-        </table>
-    </div>
-</section>
-
-<!-- ================= ACTION BUTTONS ================= -->
-<div class="actions">
-    <button onclick="goTransfer()">💸 Transfer</button>
-    <button onclick="goTransactions()">📜 View Transactions</button>
-    <button onclick="goBudgets()">📊 Budgets</button>
-    <button onclick="goBills()">🧾 Bills</button>
-    <button onclick="goCategoryRules()">🏷 Category Rules</button>
 </div>
 
-<!-- ================= CONFIG ================= -->
+<!-- ===== SCRIPTS ===== -->
 <script src="js/config.js"></script>
-
-<!-- ✅ CHART.JS MUST COME BEFORE dashboard.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- ================= DASHBOARD LOGIC ================= -->
 <script src="js/dashboard.js"></script>
 
-<!-- ================= NAVIGATION ================= -->
 <script>
-    function goTransfer() {
-        window.location.href = "transfer.html";
-    }
-    function goTransactions() {
-        window.location.href = "history.html";
-    }
-    function goBudgets() {
-        window.location.href = "budgets.html";
-    }
-    function goBills() {
-        window.location.href = "bills.html";
-    }
-    function goCategoryRules() {
-        window.location.href = "category_rules.html";
-    }
-    function logout() {
-        localStorage.removeItem("access_token");
-        window.location.href = "login.html";
-    }
+/* ===== NAVIGATION ===== */
+function goTransactions() {
+    window.location.href = "history.html";
+}
+
+function logout() {
+    localStorage.removeItem("access_token");
+    window.location.href = "login.html";
+}
+
+/* ===== NOTIFICATIONS ===== */
+function showNotifications() {
+    const popup = document.getElementById("notificationPopup");
+    if (!popup) return;
+
+    popup.style.display =
+        popup.style.display === "block" ? "none" : "block";
+}
+
+function closeNotifications() {
+    const popup = document.getElementById("notificationPopup");
+    if (popup) popup.style.display = "none";
+}
+
+function handleNotificationBack(event) {
+    event.stopPropagation();
+    closeNotifications();
+}
+
+/* ===== PROFILE (ONLY ICON POPUP) ===== */
+function toggleProfile() {
+    const profile = document.getElementById("profilePopup");
+    if (!profile) return;
+
+    profile.style.display =
+        profile.style.display === "block" ? "none" : "block";
+}
+/* 🔔 Notifications */
+function showNotifications() {
+    const popup = document.getElementById("notificationPopup");
+    if (!popup) return;
+
+    popup.style.display =
+        popup.style.display === "block" ? "none" : "block";
+}
+
+/* 👤 Profile */
+function toggleProfile() {
+    const profile = document.getElementById("profilePopup");
+    if (!profile) return;
+
+    profile.style.display =
+        profile.style.display === "block" ? "none" : "block";
+}
+
+/* ⚙️ Settings  ← ADD THIS HERE */
+function toggleSettings() {
+    const modal = document.getElementById("settingsModal");
+    if (!modal) return;
+
+    modal.style.display =
+        modal.style.display === "block" ? "none" : "block";
+}
+function showToast(message) {
+    const toast = document.getElementById("toast");
+    const msg = document.getElementById("toastMessage");
+
+    if (!toast || !msg) return;
+
+    msg.innerText = message;
+    toast.style.display = "block";
+
+    setTimeout(() => {
+        toast.style.display = "none";
+    }, 3500);
+}
+
+function openProfileFromSettings() {
+    // Close settings modal
+    const settings = document.getElementById("settingsModal");
+    if (settings) settings.style.display = "none";
+
+    // Open profile popup
+    toggleProfile();
+}
+
+/* 🚪 Logout */
+function logout() {
+    localStorage.removeItem("access_token");
+    window.location.href = "login.html";
+}
+function goAccounts() {
+    window.location.href = "accounts.html";
+}
+function changePassword() {
+    document.getElementById("changePasswordModal").style.display = "flex";
+}
+
+function closeChangePassword() {
+    document.getElementById("changePasswordModal").style.display = "none";
+}
+function simulateNewTransaction() {
+    showToast("💸 New transaction detected on your account");
+}
+
+window.addEventListener("load", () => {
+    setTimeout(() => {
+        showToast("💳 ₹2,999 debited for Flight booking");
+    }, 1500);
+});
+
 </script>
 
+
 </body>
+<!-- 🔐 CHANGE PASSWORD MODAL -->
+<div id="changePasswordModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3>🔐 Change Password</h3>
+        <p>This feature will be available soon.</p>
+        <button onclick="closeChangePassword()">OK</button>
+    </div>
+</div>
+<!-- 🔔 TOAST NOTIFICATION -->
+<div id="toast" class="toast">
+    <span id="toastMessage">New notification received</span>
+</div>
+
 </html>
-<!-- TEST CHANGE 2026 -->
-<!-- Dashboard updated on Jan 23 -->

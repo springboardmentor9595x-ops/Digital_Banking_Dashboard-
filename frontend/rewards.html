@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rewards</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Top Header Bar -->
+  <div
+    style="
+      background-color: #1e3a8a;
+      color: white;
+      padding: 15px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    "
+  >
+    <h2 style="margin: 0;">🎁 Rewards</h2>
+
+    <button
+      onclick="window.location.href='dashboard.html'"
+      style="
+        background-color: #ef4444;
+        color: white;
+        border: none;
+        padding: 8px 18px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+      "
+    >
+      Back
+    </button>
+  </div>
+
+  <!-- Main Content -->
+  <div
+    style="
+      padding: 25px;
+      background-color: #f1f5f9;
+      min-height: 90vh;
+    "
+  >
+
+    <!-- Rewards Card -->
+    <div
+      style="
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        margin-bottom: 25px;
+      "
+    >
+      <h3 style="margin-bottom: 15px;">My Rewards</h3>
+
+      <table width="100%" style="border-collapse: collapse;">
+        <thead>
+          <tr style="background-color: #f8fafc;">
+            <th style="padding: 12px; text-align: left;">Program</th>
+            <th style="padding: 12px; text-align: center;">Points</th>
+            <th style="padding: 12px; text-align: center;">Last Updated</th>
+            <th style="padding: 12px; text-align: center;">Convert</th>
+          </tr>
+        </thead>
+        <tbody id="rewardsTable">
+          <!-- Rows injected by rewards.js -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Currency Summary Card -->
+    <div
+      style="
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      "
+    >
+      <h3 style="margin-bottom: 10px;">Currency Summary</h3>
+      <div id="currencySummary" style="font-size: 15px;"></div>
+    </div>
+
+  </div>
+
+  <script src="js/rewards.js"></script>
+</body>
+</html>

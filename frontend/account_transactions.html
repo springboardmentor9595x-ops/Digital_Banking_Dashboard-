@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Account Transactions</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+
+    <style>
+        body {
+            background: #f5f7fb;
+            margin: 0;
+            font-family: "Segoe UI", sans-serif;
+        }
+
+        /* Header */
+        .top-bar {
+            background: #1e3a8a;
+            color: white;
+            padding: 16px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .container {
+            padding: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+        }
+
+        th, td {
+            padding: 14px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+
+        th {
+            background: #f1f5f9;
+        }
+
+        .credit {
+            color: green;
+            font-weight: bold;
+        }
+
+        .debit {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="top-bar">
+    <h2>📜 Account Transactions</h2>
+    <button class="back-btn" onclick="goBack()">⬅ Accounts</button>
+</header>
+
+<!-- ===== TABLE ===== -->
+<div class="container">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Type</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody id="transactions-body"></tbody>
+    </table>
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="js/config.js"></script>
+
+<script>
+    const token = localStorage.getItem("access_token");
+
+    function getAccountId() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("account_id");
+    }
+
+    async function loadTransactions() {
+        const accountId = getAccountId();
+
+        if (!token || !accountId) {
+            alert("Invalid account");
+            window.location.href = "accounts.html";
+            return;
+        }
+
+        try {
+            const res = await fetch(
+                `${BASE_URL}/transactions/by-account?account_id=${accountId}`,
+                {
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                }
+            );
+
+            const transactions = await res.json();
+            const tbody = document.getElementById("transactions-body");
+            tbody.innerHTML = "";
+
+            if (transactions.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4">No transactions found</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            transactions.forEach(tx => {
+                const tr = document.createElement("tr");
+
+                const date = tx.created_at
+                    ? new Date(tx.created_at).toLocaleString()
+                    : "-";
+
+                tr.innerHTML = `
+                    <td>${date}</td>
+                    <td>${tx.description || "-"}</td>
+                    <td>${tx.type}</td>
+                    <td class="${tx.type === 'DEBIT' ? 'debit' : 'credit'}">
+                        ₹ ${tx.amount}
+                    </td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+
+        } catch (err) {
+            console.error(err);
+            alert("Failed to load transactions");
+        }
+    }
+
+    function goBack() {
+        window.location.href = "accounts.html";
+    }
+
+    // Load on page open
+    loadTransactions();
+</script>
+
+</body>
+</html>

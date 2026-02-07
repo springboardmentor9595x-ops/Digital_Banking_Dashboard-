@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
-from app.db.database import Base
+from app.db.base_class import Base
+
 
 
 class User(Base):
@@ -10,8 +11,28 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
 
-    accounts = relationship("Account", back_populates="owner", cascade="all, delete")
+    # existing relationship (DO NOT REMOVE)
+    accounts = relationship(
+        "Account",
+        back_populates="owner",
+        cascade="all, delete"
+    )
 
+    # ✅ ADD THESE (FIXES YOUR ERROR)
+    budgets = relationship(
+        "Budget",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
+    bills = relationship(
+        "Bill",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
-
+    category_rules = relationship(
+        "CategoryRule",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )

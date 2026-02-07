@@ -1,29 +1,413 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Accounts</title>
+    <meta charset="UTF-8">
+    <title>My Accounts</title>
+
+    <!-- Reuse dashboard styles -->
+    <link rel="stylesheet" href="css/dashboard.css">
+
+    <style>
+        body {
+            background: #f5f7fb;
+            margin: 0;
+            font-family: "Segoe UI", sans-serif;
+        }
+
+        /* ===== HEADER ===== */
+        .top-bar {
+            background: #1e3a8a;
+            color: white;
+            padding: 16px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .back-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .add-account-btn {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 6px 14px rgba(34,197,94,0.35);
+        }
+
+        .add-account-btn:hover {
+            background: #16a34a;
+        }
+
+        /* ===== PAGE CONTENT ===== */
+        .page-container {
+            padding: 30px;
+            max-width: 900px;
+            margin: auto;
+        }
+
+        /* ===== SECTION TITLE (ADDED) ===== */
+        .section-title {
+            margin: 10px 0 20px;
+            font-size: 15px;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        /* ===== ACCOUNT CARD ===== */
+        .account-card {
+            background: white;
+            padding: 22px 26px;
+            margin-bottom: 18px;
+            border-radius: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            border-left: 6px solid #1e3a8a;
+        }
+        .account-card:active {
+            transform: translateY(-2px) scale(0.99);
+        }
+
+        .account-card:hover {
+            transform: translateY(-6px) scale(1.01);
+            box-shadow: 0 18px 45px rgba(0,0,0,0.18);
+            border-left-color: #2563eb;
+            background: #f8fbff;
+        }
+        .account-card:hover {
+            transform: translateY(-4px);
+            box-shadow:
+                0 16px 35px rgba(30, 58, 138, 0.25),
+                0 0 0 2px rgba(37, 99, 235, 0.15);
+            background: #f8fbff;
+        }
+
+
+        /* subtle glow animation */
+        .account-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .account-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .bank-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #e0e7ff;
+            color: #1e3a8a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .account-name {
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .account-type {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .account-balance {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1e40af;
+        }
+        /* ⭐ PRIMARY ACCOUNT BADGE */
+        .primary-badge {
+            background: #22c55e;
+            color: white;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        /* ⭐ BANK LOGOS */
+        .bank-icon img {
+            width: 26px;
+            height: 26px;
+            object-fit: contain;
+        }
+        .bank-icon img {
+            width: 26px;
+            height: 26px;
+            object-fit: contain;
+        }
+        .bank-icon img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            display: block;
+        }
+        /* Ripple Effect */
+        .account-card::after {
+            content: "";
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: rgba(59, 130, 246, 0.25);
+            border-radius: 50%;
+            transform: scale(0);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .account-card:active::after {
+            transform: scale(2.5);
+            opacity: 1;
+            transition: transform 0.4s ease, opacity 0.6s ease;
+        }
+        /* Account Status Badge */
+        .account-status {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-weight: 600;
+            margin-top: 6px;
+            display: inline-block;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-dormant {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .primary-badge {
+            background: linear-gradient(135deg, #facc15, #f59e0b);
+            color: #78350f;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 999px;
+            margin-left: 6px;
+        }
+        .last-updated {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        .last-updated {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        .primary-badge {
+            background: linear-gradient(135deg, #facc15, #f59e0b);
+            color: #78350f;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 999px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+    </style>
 </head>
+
 <body>
-  <h2>My Accounts</h2>
 
-  <button onclick="loadAccounts()">Load Accounts</button>
-  <pre id="output"></pre>
+<!-- ===== HEADER ===== -->
+<header class="top-bar">
+    <h2>🏦 My Accounts</h2>
 
-  <a href="transfer.html">Transfer Money</a><br>
-  <a href="transactions.html">Transaction History</a>
+    <div class="header-actions">
+        <button class="back-btn"
+                aria-label="Go back to dashboard"
+                onclick="goBack()">
+            ⬅ Dashboard
+        </button>
 
-  <script src="app.js"></script>
-  <script>
-    function loadAccounts() {
-      fetch(`${BASE_URL}/accounts/`, {
-        headers: getAuthHeaders()
-      })
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("output").innerText =
-          JSON.stringify(data, null, 2);
-      });
+        <button class="add-account-btn"
+                aria-label="Add new bank account"
+                onclick="goAddAccount()">
+            ➕ Add Account
+        </button>
+
+    </div>
+</header>
+
+<!-- ===== ACCOUNTS LIST ===== -->
+<div class="page-container" id="accounts-container">
+
+    <!-- SECTION TITLE (ADDED) -->
+    <h4 class="section-title">Linked Bank Accounts</h4>
+
+    <!-- Accounts will load here -->
+
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="js/config.js"></script>
+
+<script>
+    async function loadAccounts() {
+        const token = localStorage.getItem("access_token");
+
+        if (!token) {
+            alert("Please login again");
+            window.location.href = "login.html";
+            return;
+        }
+
+        try {
+            const res = await fetch(`${BASE_URL}/accounts/`, {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            const accounts = await res.json();
+            const container = document.getElementById("accounts-container");
+
+            if (!accounts.length) {
+                container.innerHTML += "<p>No accounts found.</p>";
+                return;
+            }
+
+            accounts.forEach((acc, index) => {
+                const div = document.createElement("div");
+                
+                div.setAttribute("role", "button");
+                div.setAttribute(
+                    "aria-label",
+                    `Account ${acc.bank_name} with balance ₹${acc.balance}`
+                );
+
+                div.className = "account-card";
+                div.onclick = () => openAccountTransactions(acc.id);
+                const isPrimary = index === 0;
+
+                div.innerHTML = `
+                    <div class="account-left">
+                        <div class="bank-icon">
+                            ${getBankLogo(acc.bank_name)}
+                        </div>
+                        <div>
+                            <div class="account-name">
+                                ${acc.bank_name}
+                                ${isPrimary ? `<span class="primary-badge">Primary</span>` : ``}
+                            </div>
+                            <div class="account-type">${acc.account_type}</div>
+                            <div class="last-updated">
+                                Updated: ${new Date().toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="account-balance">₹ ${acc.balance}</div>
+                `;
+
+
+
+                container.appendChild(div);
+                const balanceEl = div.querySelector(".account-balance");
+                animateBalance(balanceEl, acc.balance);
+
+            });
+
+        } catch (error) {
+            console.error(error);
+            alert("Failed to load accounts");
+        }
     }
-  </script>
+    function getBankLogo(bankName) {
+        const name = bankName.toLowerCase();
+
+        if (name.includes("sbi")) {
+            return '<img src="assets/banks/sbi.png" alt="SBI">';
+        }
+        if (name.includes("hdfc")) {
+            return '<img src="assets/banks/hdfc.png" alt="HDFC">';
+        }
+        if (name.includes("axis")) {
+            return '<img src="assets/banks/axis.png" alt="AXIS">';
+        }
+
+        // fallback if bank not matched
+        return `<span>${bankName.charAt(0)}</span>`;
+    }
+    function getBankLogo(bankName) {
+        const name = bankName.toLowerCase();
+
+        if (name.includes("sbi")) {
+            return '<img src="./assets/banks/sbi.png" alt="SBI">';
+        }
+        if (name.includes("hdfc")) {
+            return '<img src="./assets/banks/hdfc.png" alt="HDFC">';
+        }
+        if (name.includes("axis")) {
+            return '<img src="./assets/banks/axis.png" alt="AXIS">';
+        }
+
+        return `<span>${bankName.charAt(0)}</span>`;
+    }
+    function animateBalance(el, value) {
+        let start = 0;
+        const duration = 800;
+        const step = Math.max(1, value / (duration / 16));
+
+        function update() {
+            start += step;
+            if (start >= value) {
+                el.innerText = `₹ ${value}`;
+            } else {
+                el.innerText = `₹ ${Math.floor(start)}`;
+                requestAnimationFrame(update);
+            }
+        }
+        update();
+    }
+
+    function openAccountTransactions(accountId) {
+        window.location.href = `account_transactions.html?account_id=${accountId}`;
+    }
+
+    function goAddAccount() {
+        window.location.href = "add_account.html";
+    }
+
+    function goBack() {
+        window.location.href = "dashboard.html";
+    }
+
+    loadAccounts();
+</script>
+
 </body>
 </html>

@@ -1,44 +1,45 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.db.database import get_db
+from app.config.database import get_db
 from app.models.category_rule import CategoryRule
 from app.schemas.category_rule import CategoryRuleCreate, CategoryRuleOut
 from app.core.security import get_current_user
+from app.models.user import User
 
 router = APIRouter(
-    prefix="/category-rules",
-    tags=["Category Rules"]
+    prefix="/categories",
+    tags=["Categories"]
 )
 
 # =========================
 # CREATE CATEGORY RULE
 # =========================
 @router.post("/", response_model=CategoryRuleOut)
-def create_category_rule(
+def create_category(
     rule: CategoryRuleCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
-    new_rule = CategoryRule(
+    category = CategoryRule(
         category_name=rule.category_name,
         keywords=rule.keywords,
         user_id=current_user.id
     )
 
-    db.add(new_rule)
+    db.add(category)
     db.commit()
-    db.refresh(new_rule)
-    return new_rule
+    db.refresh(category)
+    return category
 
 
 # =========================
 # LIST USER CATEGORY RULES
 # =========================
 @router.get("/", response_model=list[CategoryRuleOut])
-def list_category_rules(
+def list_categories(
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     return (
         db.query(CategoryRule)

@@ -7,8 +7,13 @@ class BudgetCreate(BaseModel):
     limit_amount: float
 
 
-class BudgetOut(BudgetCreate):
+class BudgetOut(BaseModel):
     id: int
+    category: str
+    limit: float
+    spent: float
+    remaining: float
+    over_budget: bool
 
     class Config:
         from_attributes = True

@@ -1,3 +1,4 @@
+/* ================= GLOBAL ================= */
 * {
     margin: 0;
     padding: 0;
@@ -10,8 +11,56 @@ body {
     min-height: 100vh;
 }
 
-/* NAVBAR */
-.navbar {
+/* ================= LAYOUT ================= */
+.layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+    width: 220px;
+    background-color: #1e3a8a;
+    color: white;
+    padding: 20px;
+}
+
+.sidebar-title {
+    margin-bottom: 25px;
+    font-size: 20px;
+    text-align: center;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar-menu li {
+    margin-bottom: 15px;
+}
+
+.sidebar-menu a {
+    text-decoration: none;
+    color: white;
+    font-size: 16px;
+    display: block;
+    padding: 10px 12px;
+    border-radius: 6px;
+}
+
+.sidebar-menu a:hover {
+    background-color: #2563eb;
+}
+
+/* ================= MAIN CONTENT ================= */
+.main-content {
+    flex: 1;
+    background-color: #f5f7fb;
+}
+
+/* ================= TOP BAR ================= */
+.top-bar {
     background: #1e3a8a;
     color: white;
     padding: 16px 30px;
@@ -33,122 +82,69 @@ body {
     background: #dc2626;
 }
 
-/* DASHBOARD */
-.dashboard-container {
-    padding: 40px;
-}
-
-/* SUMMARY CARDS */
-.summary-grid {
+/* ================= SUMMARY SECTIONS ================= */
+.summary {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 20px;
+    padding: 20px 30px;
 }
 
-.summary-card {
+.card {
     background: white;
     border-radius: 12px;
     padding: 25px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.08);
 }
 
-.summary-card h3 {
+.card h4 {
     color: #475569;
     margin-bottom: 10px;
 }
 
-.summary-card p {
-    font-size: 26px;
+.card p {
+    font-size: 22px;
     font-weight: bold;
 }
 
-.balance p {
-    color: #1e40af;
-}
-
-.income p {
+.card.income p {
     color: #15803d;
 }
 
-.expense p {
+.card.expense p {
     color: #b91c1c;
 }
 
-/* ACTION BUTTONS */
-.action-buttons {
-    margin-top: 40px;
-    display: flex;
-    gap: 15px;
-}
-
-.action-buttons button {
-    padding: 12px 22px;
-    border: none;
-    border-radius: 8px;
-    background: #1e40af;
-    color: white;
-    font-size: 15px;
-    cursor: pointer;
-}
-
-.action-buttons button:hover {
-    background: #1e3a8a;
-}
-.dashboard-bg {
-    background: #eef4ff;
-    font-family: Arial, sans-serif;
-}
-
-/* HEADER */
-.dashboard-header {
-    background: #1e3a8a;
-    color: white;
-    padding: 15px 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.logout-btn {
-    background: #ef4444;
-    border: none;
-    padding: 8px 14px;
-    color: white;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-/* SUMMARY */
-.summary-container {
-    display: flex;
-    gap: 20px;
-    padding: 20px;
-}
-
-.summary-card {
+/* ================= CHART BOX ================= */
+.box {
     background: white;
-    flex: 1;
+    margin: 20px 30px;
     padding: 20px;
-    border-radius: 10px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
 }
 
-.summary-card.green h3 { color: green; }
-.summary-card.red h3 { color: red; }
-
-/* GRID */
-.dashboard-grid {
+/* ================= GRID ================= */
+.grid {
     display: grid;
     grid-template-columns: 1fr 2fr;
     gap: 20px;
-    padding: 20px;
+    padding: 20px 30px;
 }
 
-.card {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
+/* ================= TABLE ================= */
+table {
+    width: 100%;
+    border-collapse: collapse;
 }
 
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+/* ================= LIST ================= */
 .card ul {
     list-style: none;
     padding: 0;
@@ -160,34 +156,28 @@ body {
     padding: 8px 0;
 }
 
-/* TABLE */
-table {
-    width: 100%;
-    border-collapse: collapse;
+/* ================= ACTION BUTTONS ================= */
+.actions {
+    padding: 20px 30px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
-th, td {
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-}
-
-.credit { color: green; }
-.debit { color: red; }
-
-/* ACTION BUTTONS */
-.action-buttons {
-    padding: 20px;
-}
-
-.action-buttons button {
+.actions button {
     padding: 10px 18px;
-    margin-right: 10px;
     border: none;
     background: #1e40af;
     color: white;
     border-radius: 6px;
     cursor: pointer;
 }
+
+.actions button:hover {
+    background: #1e3a8a;
+}
+
+/* ================= CATEGORY BADGES ================= */
 .category-badge {
     display: inline-block;
     padding: 4px 10px;
@@ -198,22 +188,8 @@ th, td {
     margin-right: 8px;
 }
 
-.category-badge.food {
-    background-color: #4CAF50;
-}
-
-.category-badge.shopping {
-    background-color: #2196F3;
-}
-
-.category-badge.travel {
-    background-color: #FF9800;
-}
-
-.category-badge.bills {
-    background-color: #9C27B0;
-}
-
-.category-badge.others {
-    background-color: #607D8B;
-}
+.category-badge.food { background-color: #4CAF50; }
+.category-badge.shopping { background-color: #2196F3; }
+.category-badge.travel { background-color: #FF9800; }
+.category-badge.bills { background-color: #9C27B0; }
+.category-badge.others { background-color: #607D8B; }

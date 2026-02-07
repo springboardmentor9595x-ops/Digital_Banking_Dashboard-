@@ -13,24 +13,29 @@ from app.models.user import User
 # =========================
 # PASSWORD HASHING
 # =========================
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto"
+)
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    # ✅ bcrypt supports max 72 bytes
+    return pwd_context.hash(password[:72])
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    return pwd_context.verify(plain_password[:72], hashed_password)
 
 
 # =========================
 # JWT CONFIG
 # =========================
-SECRET_KEY = "SECRET_KEY_CHANGE_ME"   # keep same everywhere
+SECRET_KEY = "SECRET_KEY_CHANGE_ME"   # keep SAME everywhere
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
+# ✅ Must match /auth/login
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
@@ -42,9 +47,13 @@ def create_access_token(
     expires_delta: Optional[timedelta] = None,
 ):
     to_encode = data.copy()
+
     expire = datetime.utcnow() + (
-        expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expires_delta
+        if expires_delta
+        else timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
+
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -55,7 +64,7 @@ def create_access_token(
 def verify_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int | None = payload.get("user_id")
+        user_id = payload.get("user_id")
         if user_id is None:
             return None
         return payload
@@ -64,7 +73,7 @@ def verify_token(token: str):
 
 
 # =========================
-# CURRENT USER DEPENDENCY
+# CURRENT USER
 # =========================
 def get_current_user(
     token: str = Depends(oauth2_scheme),
@@ -75,12 +84,13 @@ def get_current_user(
     if payload is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
+            detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user = db.query(User).filter(User.id == payload["user_id"]).first()
+    user_id = payload.get("user_id")
 
+    user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

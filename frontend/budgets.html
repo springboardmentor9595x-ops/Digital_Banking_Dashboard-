@@ -41,6 +41,11 @@
             placeholder="Enter limit"
             min="1"
         >
+        <label>Due Date</label>
+        <input
+            type="date"
+            id="due-date"
+        >
 
         <button onclick="createBudget()">Create Budget</button>
 
@@ -61,8 +66,10 @@
                     <th>Spent</th>
                     <th>Progress</th>
                     <th>Status</th>
+                    <th>Action</th>
                 </tr>
             </thead>
+
             <tbody id="budget-table">
                 <!-- JS inserts rows -->
             </tbody>

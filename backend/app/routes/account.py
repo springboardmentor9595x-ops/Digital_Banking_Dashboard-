@@ -5,10 +5,12 @@ from app.db.database import get_db
 from app.schemas.account import AccountCreate, AccountOut, AccountUpdate
 from app.models.account import Account
 from app.models.user import User
-from app.core.deps import get_current_user
+from app.core.security import get_current_user   # ✅ FIXED IMPORT
 
-router = APIRouter(prefix="/accounts", tags=["Accounts"])
-
+router = APIRouter(
+    prefix="/accounts",
+    tags=["Accounts"]
+)
 
 # =========================
 # CREATE ACCOUNT
@@ -23,6 +25,7 @@ def create_account(
         account_type=account.account_type,
         balance=account.balance,
         currency=account.currency,
+        bank_name=account.bank_name,
         owner_id=current_user.id
     )
 
@@ -40,10 +43,11 @@ def get_accounts(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    accounts = db.query(Account).filter(
-        Account.owner_id == current_user.id
-    ).all()
-    return accounts
+    return (
+        db.query(Account)
+        .filter(Account.owner_id == current_user.id)
+        .all()
+    )
 
 
 # =========================
@@ -56,10 +60,14 @@ def update_account(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    account = db.query(Account).filter(
-        Account.id == account_id,
-        Account.owner_id == current_user.id
-    ).first()
+    account = (
+        db.query(Account)
+        .filter(
+            Account.id == account_id,
+            Account.owner_id == current_user.id
+        )
+        .first()
+    )
 
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")
@@ -83,10 +91,14 @@ def delete_account(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    account = db.query(Account).filter(
-        Account.id == account_id,
-        Account.owner_id == current_user.id
-    ).first()
+    account = (
+        db.query(Account)
+        .filter(
+            Account.id == account_id,
+            Account.owner_id == current_user.id
+        )
+        .first()
+    )
 
     if not account:
         raise HTTPException(status_code=404, detail="Account not found")

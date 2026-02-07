@@ -17,6 +17,7 @@ class AccountCreate(AccountBase):
     account_type: str
     balance: float
     currency: str
+    bank_name: Optional[str] = None
 
 
 # =========================
@@ -34,6 +35,7 @@ class AccountOut(BaseModel):
     account_type: str
     balance: float
     currency: str
+    bank_name: Optional[str] = None
 
     class Config:
         from_attributes = True

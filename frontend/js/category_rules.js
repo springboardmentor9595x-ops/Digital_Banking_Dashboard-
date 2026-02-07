@@ -23,7 +23,7 @@ async function addRule() {
     }
 
     try {
-        const res = await fetch(`${BASE_URL}/category-rules/`, {
+        const res = await fetch(`${BASE_URL}/categories/`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -63,7 +63,7 @@ async function loadRules() {
     table.innerHTML = "";
 
     try {
-        const res = await fetch(`${BASE_URL}/category-rules/`, {
+        const res = await fetch(`${BASE_URL}/categories/`, {
             headers: {
                 "Authorization": `Bearer ${token}`
             }

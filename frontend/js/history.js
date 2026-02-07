@@ -5,6 +5,7 @@ if (!token) {
     window.location.href = "login.html";
 }
 
+/* ================= LOAD HISTORY ================= */
 async function loadHistory() {
     const tbody = document.getElementById("historyTableBody");
 
@@ -12,7 +13,8 @@ async function loadHistory() {
         const res = await fetch(`${BASE_URL}/transactions/my-history`, {
             headers: {
                 "Authorization": `Bearer ${token}`
-            }
+            },
+            cache: "no-store"   // ✅ always fresh
         });
 
         if (!res.ok) {
@@ -26,10 +28,12 @@ async function loadHistory() {
 
         if (!transactions || transactions.length === 0) {
             tbody.innerHTML =
-                `<tr><td colspan="5">No transactions found</td></tr>`;
+                `<tr><td colspan="6">No transactions found</td></tr>`;
             return;
         }
 
+        // ✅ IMPORTANT: DO NOT sort / reverse
+        // Backend already sends newest → oldest
         transactions.forEach(tx => {
             const row = document.createElement("tr");
 
@@ -37,10 +41,16 @@ async function loadHistory() {
                 tx.type === "CREDIT" ? "amount-credit" : "amount-debit";
 
             const category = tx.category || "Others";
+            const bankName = tx.bank_name || "-";
 
             row.innerHTML = `
-                <td>${tx.date ? new Date(tx.date).toLocaleString() : "—"}</td>
+                <td>
+                    ${tx.created_at
+                        ? new Date(tx.created_at).toLocaleString()
+                        : "—"}
+                </td>
                 <td>${tx.description || "-"}</td>
+                <td>${bankName}</td>
 
                 <td>
                     <span class="category-badge ${category.toLowerCase()}">
@@ -66,10 +76,11 @@ async function loadHistory() {
     } catch (err) {
         console.error("History error:", err);
         tbody.innerHTML =
-            `<tr><td colspan="5">Failed to load transaction history</td></tr>`;
+            `<tr><td colspan="6">Failed to load transaction history</td></tr>`;
     }
 }
 
+/* ================= UPDATE CATEGORY ================= */
 async function updateCategory(transactionId, newCategory) {
     try {
         const res = await fetch(
@@ -88,7 +99,8 @@ async function updateCategory(transactionId, newCategory) {
             throw new Error("Category update failed");
         }
 
-        loadHistory(); // refresh table
+        // ✅ reload history (order preserved)
+        loadHistory();
 
     } catch (err) {
         console.error("Update error:", err);
@@ -96,4 +108,5 @@ async function updateCategory(transactionId, newCategory) {
     }
 }
 
+/* ================= INIT ================= */
 loadHistory();

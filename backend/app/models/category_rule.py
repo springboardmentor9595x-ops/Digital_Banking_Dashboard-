@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
-from app.db.database import Base
+from app.db.base_class import Base
+
 
 
 class CategoryRule(Base):
@@ -8,11 +9,10 @@ class CategoryRule(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # ✅ THIS COLUMN WAS MISSING
     category_name = Column(String, nullable=False)
-
     keywords = Column(String, nullable=False)
 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
+    # ✅ REQUIRED FOR SQLALCHEMY RELATIONSHIP
     user = relationship("User", back_populates="category_rules")
