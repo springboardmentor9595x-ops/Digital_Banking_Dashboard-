@@ -3,13 +3,16 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, validator
 from typing import Optional, List
 from .database import get_db
-from .models import Transaction, Account
+from .models import Transaction, Account, Alert
 from .deps import get_current_user
 from datetime import datetime
 from decimal import Decimal
 from sqlalchemy import func
 import csv
 from io import StringIO
+from .models import CategoryRule
+from .utils.categorizer import auto_categorize
+from app.services.alert_service import create_alert
 
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 
@@ -87,25 +90,48 @@ def create_transaction(
         )
         account.balance = account.balance - amount
 
+    rules = db.query(CategoryRule).filter(
+    CategoryRule.user_id == current_user.id
+).all()
 
+    category = auto_categorize(data.description or "", rules)
+ 
     # ----------- SAVE TRANSACTION -----------
 
+    # ----------- SAVE TRANSACTION -----------
     trx = Transaction(
-        user_id=current_user.id,
-        account_id=data.account_id,
-        type=data.type,
-        amount=data.amount,
-        category=data.category,
-        description=data.description,
-        date=data.date
-    )
+    user_id=current_user.id,
+    account_id=data.account_id,
+    type=data.type,
+    amount=data.amount,
+   category=auto_assign_category(db, current_user.id, data.description),
+
+    description=data.description,
+    date=data.date
+)
+
 
     db.add(trx)
     db.commit()
     db.refresh(trx)
+    # ----------- CREATE ALERT: NEW TRANSACTION -----------
+    create_alert(
+    db,
+    current_user.id,
+    "transaction",
+    f"New {data.type} of ₹{data.amount} added in {account.bank_name}"
+)
+    
+    # ----------- CREATE ALERT: LOW BALANCE -----------
+    if account.balance < 1000:
+        create_alert(
+        db,
+        current_user.id,
+        "low_balance",
+        f"Low balance in {account.bank_name}"
+    )
 
     return trx
-
 
 
 
@@ -214,17 +240,22 @@ def upload_csv(
 
             amount = abs(Decimal(row["amount"]))
 
-            
-            transaction = Transaction(
-            user_id=current_user.id,
-            account_id=account_id,
-            type=tx_type,
-            amount = amount,
-            category="CSV Import",
-            description=row.get("description", ""),
-           date=datetime.strptime(row["date"], "%Y-%m-%d")
+            rules = db.query(CategoryRule).filter(
+    CategoryRule.user_id == current_user.id
+).all()
 
-        )
+            category = auto_categorize(row.get("description", ""), rules)
+
+            transaction = Transaction(
+    user_id=current_user.id,
+    account_id=account_id,
+    type=tx_type,
+    amount=amount,
+    category=category,
+    description=row.get("description", ""),
+    date=datetime.strptime(row["date"], "%Y-%m-%d")
+)
+
 
             db.add(transaction)
             db.flush() 
@@ -255,3 +286,33 @@ def get_csv_transactions(
         Transaction.user_id == current_user.id,
         Transaction.category == "CSV Import"
     ).all()
+
+
+@router.put("/{transaction_id}/category")
+def update_transaction_category(
+    transaction_id: int,
+    category: str,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    tx = db.query(Transaction).filter(
+        Transaction.id == transaction_id,
+        Transaction.user_id == current_user.id
+    ).first()
+
+    if not tx:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    tx.category = category
+    db.commit()
+    return {"message": "Category updated successfully"}
+
+def auto_assign_category(db, user_id, text):
+    rules = db.query(CategoryRule).filter(CategoryRule.user_id == user_id).all()
+    text = (text or "").lower()
+
+    for rule in rules:
+        for kw in rule.keywords.split(","):
+            if kw and kw.strip() in text:
+                return rule.category_name
+    return "Others"

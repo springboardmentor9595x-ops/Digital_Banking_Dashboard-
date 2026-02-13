@@ -6,7 +6,7 @@ from . import models
 from .database import get_db
 from .security import hash_password, verify_password
 from .jwt_utils import create_access_token, create_refresh_token
-
+from .utils.category_seed import seed_default_categories
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
@@ -39,7 +39,7 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-
+    seed_default_categories(db, new_user.id)
     return {"message": "User registered successfully"}
 
 # ----------- Login -----------
