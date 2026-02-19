@@ -14,5 +14,7 @@ class RewardOut(BaseModel):
     points_balance: int
     last_updated: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+}
+

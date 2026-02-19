@@ -298,6 +298,12 @@
             <li><a href="bills.html">🧾 Bills</a></li>
             <li><a href="category_rules.html">🗂️ Category Rules</a></li>
             <li><a href="rewards.html">🎁 Rewards</a></li>
+            <li><a href="insights.html">📈 Insights</a></li>
+            <li><a href="alert-center.html">
+                    <span>🔔</span> Alert Center
+                </a>
+            </li>
+
         </ul>
 
         <button class="sidebar-logout" onclick="logout()">🚪 Logout</button>
@@ -310,8 +316,29 @@
         <header class="top-bar">
             <h2>🏦 My Bank Dashboard</h2>
 
-            <div class="top-actions">
-                <div class="icon-btn" onclick="showNotifications()">🔔</div>
+                <div class="top-actions">
+                    <button
+                        id="notification-btn"
+                        class="icon-btn"
+                        style="position: relative;"
+                    >
+                        🔔
+                        <span
+                            id="notification-count"
+                            style="
+                                position: absolute;
+                                top: -5px;
+                                right: -5px;
+                                background: red;
+                                color: white;
+                                border-radius: 50%;
+                                padding: 2px 6px;
+                                font-size: 12px;
+                                display: none;
+                            "
+                        ></span>
+                </button>
+
                 <div class="icon-btn" onclick="toggleProfile()">👤</div>
                 <div class="icon-btn" onclick="toggleSettings()">⚙️</div>
             </div>
@@ -416,45 +443,34 @@
                 <span class="notif-close" onclick="closeNotifications()">✖</span>
             </div>
 
-            <div class="notif-item debit">
-                <span class="notif-icon">💳</span>
-                <div class="notif-info">
-                    <strong>Amount Debited</strong>
-                    <small>₹2,999 spent on Flight booking</small>
-            </div>
-            <span class="notif-time">Today</span>
+        <!-- 🔢 NOTIFICATION SUMMARY (ADD THIS) -->
+        <div style="
+            font-size:12px;
+            color:#64748b;
+            margin-bottom:8px;
+        ">
+            You have <strong id="notifSummaryCount"></strong> notifications
         </div>
 
-        <div class="notif-item info">
-            <span class="notif-icon">🍔</span>
-            <div class="notif-info">
-                <strong>New Transaction</strong>
-                <small>Zomato payment categorized as Food</small>
-            </div>
-            <span class="notif-time">Today</span>
-        </div>
-
-        <div class="notif-item warning">
-            <span class="notif-icon">📊</span>
-            <div class="notif-info">
-                <strong>Budget Update</strong>
-                <small>Shopping budget is 65% utilized</small>
-            </div>
-            <span class="notif-time">This week</span>
-        </div>
-
-        <div class="notif-item info">
-            <span class="notif-icon">🧾</span>
-            <div class="notif-info">
-                <strong>Transaction Recorded</strong>
-                <small>Amazon transaction saved successfully</small>
-            </div>
-            <span class="notif-time">This week</span>
-        </div>
-
-        <button class="notif-back-btn" onclick="handleNotificationBack(event)">
-            ⬅ Back
+        <!-- 👇 EXISTING LIST (DO NOT TOUCH) -->
+    <div id="notificationList"></div>
+        <button
+            onclick="clearAllNotifications()"
+            style="
+                width:100%;
+                margin-top:10px;
+                padding:8px;
+                border:none;
+                border-radius:8px;
+                background:#f1f5f9;
+                color:#334155;
+                font-size:13px;
+                cursor:pointer;
+            "
+        >
+            🧹 Clear All Notifications
         </button>
+
     </div>
         <!-- ===== SUMMARY CARDS ===== -->
         <section class="summary">
@@ -522,6 +538,7 @@
 <!-- ===== SCRIPTS ===== -->
 <script src="js/config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/notifications.js"></script>
 <script src="js/dashboard.js"></script>
 
 <script>
@@ -540,8 +557,34 @@ function showNotifications() {
     const popup = document.getElementById("notificationPopup");
     if (!popup) return;
 
-    popup.style.display =
-        popup.style.display === "block" ? "none" : "block";
+    const list = popup.querySelector("ul");
+    if (!list) return;
+
+    // clear old items
+    list.innerHTML = "";
+
+    const notifications = getNotifications();
+
+    if (notifications.length === 0) {
+        list.innerHTML = "<li>No notifications</li>";
+    } else {
+        notifications.forEach(n => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+                <strong>${n.message}</strong><br/>
+                <small style="color:#666;">${n.time}</small>
+            `;
+            list.appendChild(li);
+            n.read = true; // mark as read when opened
+        });
+
+        localStorage.setItem(
+            "notifications",
+            JSON.stringify(notifications)
+        );
+    }
+
+    popup.style.display = "block";
 }
 
 function closeNotifications() {
@@ -632,9 +675,136 @@ function simulateNewTransaction() {
 
 window.addEventListener("load", () => {
     setTimeout(() => {
-        showToast("💳 ₹2,999 debited for Flight booking");
-    }, 1500);
+        checkAlerts();
+    }, 500);   // delay 0.5 seconds
 });
+
+
+function submitChangePassword() {
+    const oldPwd = document.getElementById("oldPassword").value;
+    const newPwd = document.getElementById("newPassword").value;
+    const confirmPwd = document.getElementById("confirmPassword").value;
+    const msg = document.getElementById("passwordMsg");
+
+    if (!oldPwd || !newPwd || !confirmPwd) {
+        msg.style.color = "red";
+        msg.innerText = "❌ All fields are required";
+        return;
+    }
+
+    if (newPwd !== confirmPwd) {
+        msg.style.color = "red";
+        msg.innerText = "❌ New passwords do not match";
+        return;
+    }
+
+    // 🔒 Backend API can be added later
+    fetch(`${BASE_URL}/auth/change-password`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + localStorage.getItem("access_token")
+        },
+        body: JSON.stringify({
+            old_password: oldPwd,
+            new_password: newPwd
+        })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Password change failed");
+        return res.json();
+    })
+    .then(() => {
+        msg.style.color = "green";
+        msg.innerText = "✅ Password updated successfully";
+
+        setTimeout(() => {
+            closeChangePassword();
+            logout(); // 🔒 force re-login
+        }, 1200);
+    })
+    .catch(() => {
+        msg.style.color = "red";
+        msg.innerText = "❌ Current password is incorrect";
+    });
+
+}
+function clearAllNotifications() {
+    // Remove all notifications
+    localStorage.removeItem("notifications");
+
+    // Clear popup list
+    const list = document.getElementById("notificationList");
+    if (list) {
+        list.innerHTML =
+            "<p style='padding:12px;color:#666;'>No notifications</p>";
+    }
+
+    // Hide bell badge
+    const badge = document.getElementById("notification-count");
+    if (badge) badge.style.display = "none";
+}
+/* ================= BACKEND ALERT CHECK ================= */
+let currentBudgetAlertId = null;
+
+async function checkAlerts() {
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+
+    try {
+        const res = await fetch("http://127.0.0.1:8000/alerts/", {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        if (!res.ok) return;
+
+        const alerts = await res.json();
+
+        const budgetAlert = alerts.find(
+            a => a.alert_type === "budget_exceeded" && a.read_status === false
+        );
+
+        if (budgetAlert) {
+            currentBudgetAlertId = budgetAlert.id;
+
+            document.getElementById("budgetAlertMessage").innerText =
+                budgetAlert.message;
+
+            document.getElementById("budgetAlertModal").style.display = "block";
+        }
+
+    } catch (err) {
+        console.log("Alert check failed");
+    }
+}
+async function acknowledgeBudgetAlert() {
+
+    // 🔹 Hide popup immediately (UI first)
+    const modal = document.getElementById("budgetAlertModal");
+    if (modal) {
+        modal.style.display = "none";
+    }
+
+    const token = localStorage.getItem("access_token");
+    if (!token || !currentBudgetAlertId) return;
+
+    try {
+        await fetch(`http://127.0.0.1:8000/alerts/${currentBudgetAlertId}/read`, {
+            method: "PUT",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        currentBudgetAlertId = null; // reset
+
+    } catch (err) {
+        console.log("Failed to mark alert as read");
+    }
+}
+
 
 </script>
 
@@ -644,10 +814,43 @@ window.addEventListener("load", () => {
 <div id="changePasswordModal" class="modal-overlay">
     <div class="modal-box">
         <h3>🔐 Change Password</h3>
-        <p>This feature will be available soon.</p>
-        <button onclick="closeChangePassword()">OK</button>
+
+        <input
+            type="password"
+            id="oldPassword"
+            placeholder="Current Password"
+            style="width:100%;padding:8px;margin:8px 0;"
+        />
+
+        <input
+            type="password"
+            id="newPassword"
+            placeholder="New Password"
+            style="width:100%;padding:8px;margin:8px 0;"
+        />
+
+        <input
+            type="password"
+            id="confirmPassword"
+            placeholder="Confirm New Password"
+            style="width:100%;padding:8px;margin:8px 0;"
+        />
+
+        <div id="passwordMsg" style="font-size:13px;margin-top:6px;"></div>
+
+        <button onclick="submitChangePassword()" style="margin-top:12px;">
+            Update Password
+        </button>
+
+        <button
+            onclick="closeChangePassword()"
+            style="margin-top:8px;background:#ddd;color:#333;"
+        >
+            Cancel
+        </button>
     </div>
 </div>
+
 <!-- 🔔 TOAST NOTIFICATION -->
 <div id="toast" class="toast">
     <span id="toastMessage">New notification received</span>

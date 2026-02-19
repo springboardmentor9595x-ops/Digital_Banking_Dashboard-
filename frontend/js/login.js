@@ -29,7 +29,7 @@ async function login() {
             return;
         }
 
-        // ✅ SAVE TOKEN
+        // ✅ SAVE TOKEN (keep this key)
         localStorage.setItem("access_token", data.access_token);
 
         // ✅ REDIRECT

@@ -2,6 +2,9 @@ console.log("category_rules.js loaded");
 
 document.addEventListener("DOMContentLoaded", loadRules);
 
+/* =========================
+   ADD RULE
+========================= */
 async function addRule() {
     const categoryName = document.getElementById("categoryName").value.trim();
     const keywords = document.getElementById("keywords").value.trim();
@@ -55,12 +58,19 @@ async function addRule() {
     }
 }
 
+
+/* =========================
+   LOAD RULES
+========================= */
 async function loadRules() {
     const token = localStorage.getItem("access_token");
     if (!token) return;
 
-    const table = document.getElementById("rules-table");
-    table.innerHTML = "";
+    const tableBody = document.getElementById("rules-table");
+    const ruleCount = document.getElementById("rule-count");
+    const emptyState = document.getElementById("empty-state");
+
+    tableBody.innerHTML = "";
 
     try {
         const res = await fetch(`${BASE_URL}/categories/`, {
@@ -71,13 +81,35 @@ async function loadRules() {
 
         const rules = await res.json();
 
+        // Update rule count badge
+        if (ruleCount) {
+            ruleCount.textContent = rules.length;
+        }
+
+        // Show empty state if no rules
+        if (rules.length === 0) {
+            if (emptyState) emptyState.style.display = "block";
+            return;
+        } else {
+            if (emptyState) emptyState.style.display = "none";
+        }
+
+        // Render rules with keyword chips
         rules.forEach(r => {
-            table.innerHTML += `
-                <tr>
-                    <td>${r.category_name}</td>
-                    <td>${r.keywords}</td>
-                </tr>
+            const row = document.createElement("tr");
+
+            const keywordsArray = r.keywords.split(",");
+
+            const keywordsHTML = keywordsArray.map(word =>
+                `<span class="chip">${word.trim()}</span>`
+            ).join("");
+
+            row.innerHTML = `
+                <td>${r.category_name}</td>
+                <td>${keywordsHTML}</td>
             `;
+
+            tableBody.appendChild(row);
         });
 
     } catch (err) {

@@ -4,6 +4,27 @@
     <meta charset="UTF-8">
     <title>Transfer Money</title>
     <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        /* ================= ADD TRANSACTION BUTTON STYLE ================= */
+
+        .add-btn {
+            background-color: #ef4444;   /* Same red as Back button */
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .add-btn:hover {
+            background-color: #dc2626;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+    </style>
 </head>
 
 <body>
@@ -65,6 +86,7 @@
             <option value="HDFC">HDFC Bank</option>
             <option value="SBI">SBI Bank</option>
             <option value="AXIS">AXIS Bank</option>
+            <option value="PNB">PNB Bank</option>
         </select>
 
         <label>From Account ID</label>
@@ -75,6 +97,7 @@
             <option value="HDFC">HDFC Bank</option>
             <option value="SBI">SBI Bank</option>
             <option value="AXIS">AXIS Bank</option>
+            <option value="PNB">PNB Bank</option>
         </select>
 
         <label>To Account ID</label>

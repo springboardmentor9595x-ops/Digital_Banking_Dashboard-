@@ -4,5 +4,5 @@ from .transaction import router as transaction
 
 # ✅ ADD THESE
 from .bills import router as bills
-from .budget import router as budgets
+from .budgets import router as budgets
 from .category_rule import router as category_rule

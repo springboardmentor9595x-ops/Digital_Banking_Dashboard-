@@ -10,9 +10,13 @@ from app.models.transaction import Transaction
 from app.models.budget import Budget
 from app.models.category_rule import CategoryRule
 from app.models.user import User
+from app.models.reward import Reward
 from app.schemas.transaction import TransactionCreate, TransactionResponse
 from app.core.security import get_current_user
 from app.services.budgets_service import calculate_spent
+from fastapi.responses import StreamingResponse
+import csv
+import io
 
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
 
@@ -33,17 +37,21 @@ def auto_categorize(description: Optional[str], db: Session, user_id: int) -> st
 
     return "Others"
 
-
-def check_budget_alert(db: Session, user_id: int, category: str, amount: float) -> Optional[str]:
-    today = datetime.now()
+def check_budget_alert(
+    db: Session,
+    user_id: int,
+    category: str,
+    amount: float,
+    txn_date: datetime   # 👈 ADDED
+) -> Optional[str]:
 
     budget = (
         db.query(Budget)
         .filter(
             Budget.user_id == user_id,
             Budget.category == category,
-            Budget.month == today.month,
-            Budget.year == today.year
+            Budget.month == txn_date.month,   # ✅ FIXED
+            Budget.year == txn_date.year      # ✅ FIXED
         )
         .first()
     )
@@ -51,9 +59,24 @@ def check_budget_alert(db: Session, user_id: int, category: str, amount: float) 
     if not budget:
         return None
 
-    spent = calculate_spent(db, user_id, category, today.month, today.year)
+    spent = calculate_spent(
+        db,
+        user_id,
+        category,
+        txn_date.month,
+        txn_date.year
+    )
 
     if spent + amount > budget.limit_amount:
+        from app.services.alerts_service import create_alert_if_not_exists
+
+        create_alert_if_not_exists(
+            db=db,
+            user_id=user_id,
+            alert_type="budget_exceeded",
+            message=f"Budget exceeded for {category} ({txn_date.month}/{txn_date.year})"
+        )
+
         return f"⚠ Budget Alert: {category} exceeded"
 
     return None
@@ -67,44 +90,159 @@ def create_transaction(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    sender = db.query(Account).filter(Account.id == txn.from_account_id).first()
-    receiver = db.query(Account).filter(Account.id == txn.to_account_id).first()
+    sender = None
+    receiver = None
 
-    if not sender or not receiver:
-        raise HTTPException(status_code=404, detail="Account not found")
+    if txn.from_account_id:
+        sender = db.query(Account).filter(Account.id == txn.from_account_id).first()
+        if not sender:
+            raise HTTPException(status_code=404, detail="Sender account not found")
+        if sender.owner_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Unauthorized")
 
-    if sender.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Unauthorized")
+    if txn.to_account_id:
+        receiver = db.query(Account).filter(Account.id == txn.to_account_id).first()
+        if not receiver:
+            raise HTTPException(status_code=404, detail="Receiver account not found")
 
-    if sender.balance < txn.amount:
-        raise HTTPException(status_code=400, detail="Insufficient balance")
 
     category = txn.category or auto_categorize(txn.description, db, current_user.id)
-    budget_alert = check_budget_alert(db, current_user.id, category, txn.amount)
-
-    sender.balance -= txn.amount
-    receiver.balance += txn.amount
-
-    transaction = Transaction(
-        from_account_id=sender.id,
-        to_account_id=receiver.id,
-        amount=txn.amount,
-        currency=sender.currency,
-        status="SUCCESS",
-        description=txn.description or "Transfer",
-        category=category,
-
-        # ✅ THIS IS THE FIX — USE USER-SELECTED DATE
-        transaction_date=txn.date,
-
-        # 🔴 KEEP SYSTEM TIMESTAMP (DO NOT REMOVE)
-        created_at=datetime.utcnow()
+    budget_alert = check_budget_alert(
+        db,
+        current_user.id,
+        category,
+        txn.amount,
+        txn.date   # 👈 PASS TRANSACTION DATE
     )
 
+
+    # External Expense (money leaving system)
+    if sender and not receiver:
+        if sender.balance < txn.amount:
+            raise HTTPException(status_code=400, detail="Insufficient balance")
+        sender.balance -= txn.amount
+
+    # External Income (salary etc)
+    elif receiver and not sender:
+        receiver.balance += txn.amount
+
+    # Internal Transfer (between two accounts)
+    elif sender and receiver:
+        if sender.balance < txn.amount:
+            raise HTTPException(status_code=400, detail="Insufficient balance")
+        sender.balance -= txn.amount
+        receiver.balance += txn.amount
+
+    else:
+        raise HTTPException(status_code=400, detail="Invalid transaction")
+
+
+    transaction = Transaction(
+        from_account_id=txn.from_account_id,   # ✅ FIXED
+        to_account_id=txn.to_account_id,       # ✅ FIXED
+        amount=txn.amount,
+        currency=sender.currency if sender else "INR",
+        status="SUCCESS",
+        description=txn.description,
+        merchant=txn.merchant,
+        category=category,
+        transaction_date=txn.date,             # ✅ use request date
+        created_at=datetime.utcnow()
+    )
 
     db.add(transaction)
     db.commit()
     db.refresh(transaction)
+    # 🔔 Low Balance Alert (AFTER transaction commit)
+    from app.services.alerts_service import create_alert_if_not_exists
+
+    LOW_BALANCE_THRESHOLD = 1000  # change if needed
+
+    if sender.balance < LOW_BALANCE_THRESHOLD:
+        create_alert_if_not_exists(
+            db=db,
+            user_id=current_user.id,
+            alert_type="low_balance",
+            message=f"Low balance in account {sender.account_number}"
+        )
+        # ================= REWARD SYSTEM =================
+
+    # 🎯 1% Base reward for ALL transactions
+    base_points = int(transaction.amount * 0.01)
+
+    credit_reward = db.query(Reward).filter(
+        Reward.user_id == current_user.id,
+        Reward.program_name == "Credit Card Rewards"
+    ).first()
+
+    if not credit_reward:
+        credit_reward = Reward(
+            program_name="Credit Card Rewards",
+            points_balance=0,
+            user_id=current_user.id
+        )
+        db.add(credit_reward)
+
+    credit_reward.points_balance += base_points
+
+
+    # 🎁 Category Bonus Rewards
+    category_lower = (transaction.category or "").lower()
+
+    def add_bonus(program_name: str, percent: float):
+        bonus_points = int(transaction.amount * percent)
+
+        reward = db.query(Reward).filter(
+            Reward.user_id == current_user.id,
+            Reward.program_name == program_name
+        ).first()
+
+        if not reward:
+            reward = Reward(
+                program_name=program_name,
+                points_balance=0,
+                user_id=current_user.id
+            )
+            db.add(reward)
+
+        reward.points_balance += bonus_points
+
+
+    if category_lower == "shopping":
+        add_bonus("Flipkart Coins", 0.01)
+
+    elif category_lower == "food":
+        add_bonus("Swiggy Rewards", 0.02)
+
+    elif category_lower == "bills":
+        add_bonus("Bills Cashback", 0.005)
+
+    elif category_lower == "transport":
+        add_bonus("Travel Rewards", 0.005)
+    # 🔥 BONUS FOR HIGH AMOUNT (ANY CATEGORY)
+    HIGH_AMOUNT_THRESHOLD = 1000  # you can change this
+
+    if transaction.amount >= HIGH_AMOUNT_THRESHOLD:
+
+        generic_program = f"{transaction.category} Rewards"
+
+        reward = db.query(Reward).filter(
+            Reward.user_id == current_user.id,
+            Reward.program_name == generic_program
+        ).first()
+
+        if not reward:
+            reward = Reward(
+                program_name=generic_program,
+                points_balance=0,
+                user_id=current_user.id
+            )
+            db.add(reward)
+
+        bonus_points = int(transaction.amount * 0.01)  # 1% bonus
+        reward.points_balance += bonus_points
+
+    db.commit()
 
     # 🔄 UPDATE BUDGET SPENT
     budget = (
@@ -112,20 +250,22 @@ def create_transaction(
         .filter(
             Budget.user_id == current_user.id,
             Budget.category == transaction.category,
-            Budget.month == transaction.created_at.month,
-            Budget.year == transaction.created_at.year
+            Budget.month == transaction.transaction_date.month,
+            Budget.year == transaction.transaction_date.year
         )
         .first()
-    )
+    ) 
+
 
     if budget:
         budget.spent = calculate_spent(
             db,
             current_user.id,
             transaction.category,
-            transaction.created_at.month,
-            transaction.created_at.year
+            transaction.transaction_date.month,
+            transaction.transaction_date.year
         )
+
         db.commit()
 
     response = {
@@ -143,7 +283,6 @@ def create_transaction(
 
 
 # ================= DASHBOARD SUMMARY =================
-
 @router.get("/dashboard/summary")
 def get_dashboard_summary(
     db: Session = Depends(get_db),
@@ -152,14 +291,17 @@ def get_dashboard_summary(
     accounts = db.query(Account).filter(Account.owner_id == current_user.id).all()
     account_ids = [a.id for a in accounts]
 
+    # ✅ Real balance (already updated in create_transaction)
     total_balance = sum(a.balance for a in accounts)
 
+    # Income = money received from outside
     income = (
         db.query(func.coalesce(func.sum(Transaction.amount), 0))
         .filter(Transaction.to_account_id.in_(account_ids))
         .scalar()
     )
 
+    # Expense = money sent outside
     expense = (
         db.query(func.coalesce(func.sum(Transaction.amount), 0))
         .filter(Transaction.from_account_id.in_(account_ids))
@@ -167,11 +309,10 @@ def get_dashboard_summary(
     )
 
     return {
-        "total_balance": total_balance,
-        "total_income": income,
-        "total_expenses": expense
+        "total_balance": float(total_balance),
+        "total_income": float(income),
+        "total_expenses": float(expense),
     }
-
 
 # ================= DASHBOARD RECENT (FIXED) =================
 @router.get("/dashboard")
@@ -310,3 +451,54 @@ def get_my_history(
         })
 
     return {"transactions": result}
+@router.get("/export/csv")
+def export_transactions_csv(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    accounts = db.query(Account).filter(Account.owner_id == current_user.id).all()
+    account_ids = [a.id for a in accounts]
+
+    transactions = (
+        db.query(Transaction)
+        .filter(
+            (Transaction.from_account_id.in_(account_ids)) |
+            (Transaction.to_account_id.in_(account_ids))
+        )
+        .order_by(Transaction.transaction_date.desc())
+        .all()
+    )
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Header
+    writer.writerow([
+        "Date",
+        "Description",
+        "Category",
+        "Amount",
+        "Type"
+    ])
+
+    # Rows
+    for tx in transactions:
+        tx_type = "DEBIT" if tx.from_account_id in account_ids else "CREDIT"
+
+        writer.writerow([
+            tx.transaction_date,
+            tx.description,
+            tx.category,
+            tx.amount,
+            tx_type
+        ])
+
+    output.seek(0)
+
+    return StreamingResponse(
+        output,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": "attachment; filename=transactions.csv"
+        }
+    )

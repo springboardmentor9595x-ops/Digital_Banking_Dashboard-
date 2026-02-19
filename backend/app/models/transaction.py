@@ -11,11 +11,12 @@ class Transaction(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     from_account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
-    to_account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
+    to_account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True)
     amount = Column(Float, nullable=False)
     currency = Column(String, nullable=False)
-    status = Column(String, default="SUCCESS")
+    status = Column(String, default="SUCCESS")    
     description = Column(String, nullable=True)
+    merchant = Column(String, nullable=True)
     category = Column(String, nullable=True, default="Others")
 
     # ✅ ACTUAL transaction date (used by budgets)

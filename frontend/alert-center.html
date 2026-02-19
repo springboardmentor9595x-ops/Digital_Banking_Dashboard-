@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Alert Center</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/alert-center.css">
+</head>
+<body>
+
+<div class="layout">
+
+    <!-- Keep your existing sidebar here -->
+
+    <div class="main-content">
+
+    <div class="page-header">
+    <div class="header-left">
+        <span class="bell-icon">🔔</span>
+        <h2>Alert Center</h2>
+    </div>
+
+    <button class="back-btn" onclick="goBack()">← Back</button>
+</div>
+
+
+    <div id="alertsContainer" class="alerts-list"></div>
+
+</div>
+
+
+</div>
+
+<script src="js/alert-center.js"></script>
+<script>
+function goBack() {
+    window.location.href = "dashboard.html";
+}
+</script>
+
+
+</body>
+</html>

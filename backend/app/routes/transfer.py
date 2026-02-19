@@ -24,7 +24,6 @@ def transfer_money(
     if amount <= 0:
         raise HTTPException(status_code=400, detail="Invalid amount")
 
-    # ✅ USE owner_id (as per your Account model)
     from_acc = db.query(Account).filter(
         Account.id == from_account_id,
         Account.owner_id == current_user.id
@@ -58,7 +57,9 @@ def transfer_money(
         currency="INR",
         status="SUCCESS",
         description="Transfer sent",
+        merchant=None,
         category="Transfer",
+        transaction_date=now,   # ✅ REQUIRED FIX
         created_at=now
     )
 
@@ -72,7 +73,9 @@ def transfer_money(
         currency="INR",
         status="SUCCESS",
         description="Transfer received",
+        merchant=None,
         category="Transfer",
+        transaction_date=now,   # ✅ REQUIRED FIX
         created_at=now
     )
 

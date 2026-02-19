@@ -35,5 +35,6 @@ class BillOut(BaseModel):
     status: str
     auto_pay: bool
 
-    class Config:
-        from_attributes = True
+    model_config = {
+        "from_attributes": True
+}

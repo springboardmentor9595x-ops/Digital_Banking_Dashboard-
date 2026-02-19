@@ -10,6 +10,10 @@ from app.models.budget import Budget
 from app.models.user import User
 from app.core.security import get_current_user
 from app.services.budgets_service import calculate_spent
+from fastapi.responses import StreamingResponse
+import csv
+import io
+
 
 router = APIRouter(
     prefix="/budgets",
@@ -77,7 +81,9 @@ def get_budgets(
     budgets = (
         db.query(Budget)
         .filter(Budget.user_id == current_user.id)
+        .order_by(Budget.id.desc())
         .all()
+
     )
 
     result = []
@@ -189,3 +195,58 @@ def delete_budget(
     db.commit()
 
     return {"message": "Budget deleted successfully"}
+# ================= EXPORT BUDGET CSV =================
+
+@router.get("/export/csv")
+def export_budget_csv(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    budgets = (
+        db.query(Budget)
+        .filter(Budget.user_id == current_user.id)
+        .order_by(Budget.id.desc())
+        .all()
+    )
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow([
+        "Category",
+        "Month",
+        "Year",
+        "Limit",
+        "Spent",
+        "Status"
+    ])
+
+    for budget in budgets:
+        spent = calculate_spent(
+            db,
+            current_user.id,
+            budget.category,
+            budget.month,
+            budget.year
+        )
+
+        status = "Exceeded" if spent > budget.limit_amount else "Within Limit"
+
+        writer.writerow([
+            budget.category,
+            budget.month,
+            budget.year,
+            budget.limit_amount,
+            spent,
+            status
+        ])
+
+    output.seek(0)
+
+    return StreamingResponse(
+        output,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": "attachment; filename=budgets.csv"
+        }
+    )

@@ -76,3 +76,33 @@ def get_me(current_user: User = Depends(get_current_user)):
         "id": current_user.id,
         "email": current_user.email
     }
+# =========================
+# CHANGE PASSWORD
+# =========================
+@router.post("/change-password")
+def change_password(
+    data: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    old_password = data.get("old_password")
+    new_password = data.get("new_password")
+
+    if not old_password or not new_password:
+        raise HTTPException(
+            status_code=400,
+            detail="Old password and new password are required"
+        )
+
+    # 🔐 verify current password
+    if not verify_password(old_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=400,
+            detail="Incorrect current password"
+        )
+
+    # 🔐 update password
+    current_user.hashed_password = hash_password(new_password)
+    db.commit()
+
+    return {"message": "Password updated successfully"}

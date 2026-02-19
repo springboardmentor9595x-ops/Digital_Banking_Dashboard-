@@ -11,5 +11,7 @@ class CategoryRuleOut(BaseModel):
     category_name: str
     keywords: str
 
-    class Config:
-        from_attributes = True
+    model_config = {
+        "from_attributes": True
+}
+

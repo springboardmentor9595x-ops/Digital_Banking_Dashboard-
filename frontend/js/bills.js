@@ -1,4 +1,3 @@
-
 // ==========================
 // LOAD BILLS ON PAGE LOAD
 // ==========================
@@ -25,10 +24,12 @@ async function loadBills() {
         const table = document.getElementById("bill-table");
         table.innerHTML = "";
 
+        // ==========================
+        // RENDER BILL TABLE (DO NOT TOUCH)
+        // ==========================
         bills.forEach(bill => {
             const row = document.createElement("tr");
 
-            // Action button
             let actionBtn =
                 bill.status !== "paid"
                     ? `<button onclick="markPaid(${bill.id})">Mark Paid</button>`
@@ -44,7 +45,33 @@ async function loadBills() {
 
             table.appendChild(row);
         });
+        // ==========================
+        // SAVE BILL NOTIFICATIONS (NO POPUP HERE)
+        // ==========================
+        const existingNotifications = getNotifications();
 
+        bills.forEach(bill => {
+            const key = `bill-${bill.id}-${bill.status}`;
+
+            const exists = existingNotifications.some(n => n.key === key);
+            if (exists) return;
+
+            if (bill.status === "due") {
+                addNotification(
+                    `⚠ Bill Due: ${bill.biller_name} (₹${bill.amount_due})`,
+                    "bill",
+                    key
+                );
+            }
+
+            if (bill.status === "upcoming") {
+                addNotification(
+                        `📅 Upcoming Bill: ${bill.biller_name} (₹${bill.amount_due})`,
+                        "bill",
+                        key
+                );
+            }
+        });
     } catch (err) {
         console.error(err);
     }
@@ -59,7 +86,6 @@ async function createBill() {
     const due_date = document.getElementById("dueDate").value;
     const msg = document.getElementById("msg");
 
-    // ✅ Validation
     if (!biller_name || amount_due <= 0 || !due_date) {
         msg.style.color = "red";
         msg.innerText = "❌ Please enter valid bill details";
@@ -87,7 +113,6 @@ async function createBill() {
         msg.style.color = "green";
         msg.innerText = "✅ Bill added successfully";
 
-        // Clear form
         document.getElementById("billName").value = "";
         document.getElementById("amount").value = "";
         document.getElementById("dueDate").value = "";
@@ -100,10 +125,6 @@ async function createBill() {
         msg.innerText = "❌ Error adding bill";
     }
 }
-
-// ==========================
-// MARK BILL AS PAID
-// ==========================
 async function markPaid(billId) {
     try {
         const token = localStorage.getItem("access_token");
@@ -117,11 +138,28 @@ async function markPaid(billId) {
             body: JSON.stringify({ status: "paid" })
         });
 
-        if (res.ok) {
-            loadBills();
-        }
+        if (!res.ok) return;
+
+        // 🔥 REMOVE OLD BILL NOTIFICATIONS (DUE / UPCOMING)
+        let notifications = getNotifications();
+
+        notifications = notifications.filter(n => {
+            if (n.type !== "bill") return true;
+
+            // remove notifications related to this bill
+            return !n.key?.startsWith(`bill-${billId}-`);
+        });
+
+        localStorage.setItem("notifications", JSON.stringify(notifications));
+
+        loadBills();
 
     } catch (err) {
         console.error(err);
     }
 }
+
+// ==========================
+// MARK THAT USER VISITED BILLS PAGE
+// ==========================
+sessionStorage.setItem("fromBillsPage", "true");

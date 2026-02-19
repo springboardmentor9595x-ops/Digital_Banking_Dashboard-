@@ -4,13 +4,179 @@
     <meta charset="UTF-8">
     <title>Category Rules</title>
     <link rel="stylesheet" href="css/dashboard.css">
+
+    <style>
+        body {
+            background: #f4f6fb;
+        }
+
+        /* Header */
+        .top-bar {
+            background: linear-gradient(90deg, #1e3a8a, #2563eb);
+            padding: 18px 25px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar h2 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            opacity: 0.85;
+            margin-top: 4px;
+        }
+
+        /* Back button (fixed small size) */
+        .back-btn {
+            width: auto !important;
+            padding: 6px 16px;
+            font-size: 14px;
+            background: #ef4444;
+            border-radius: 8px;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: #dc2626;
+        }
+
+        /* Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 30px;
+            padding: 25px;
+        }
+
+        .box {
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .box h3 {
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+        }
+
+        /* Inputs */
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            background: #1e40af;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        button:hover {
+            background: #1e3a8a;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f3f4f6;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
+        }
+
+        tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        /* Keyword Chips */
+        .chip {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-right: 6px;
+            display: inline-block;
+        }
+
+        /* Rule count badge */
+        .rule-count {
+            background: #2563eb;
+            color: white;
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #6b7280;
+        }
+    </style>
 </head>
 
 <body>
 
 <header class="top-bar">
-    <h2>🗂️ Category Rules</h2>
-    <button onclick="goBack()" class="logout-btn">Back</button>
+    <div class="header-left">
+        <h2>🗂️ Category Rules</h2>
+        <div class="subtitle">
+            Define rules to automatically categorize transactions
+        </div>
+    </div>
+
+    <button onclick="goBack()" class="back-btn">
+        Back
+    </button>
 </header>
 
 <section class="grid">
@@ -32,7 +198,9 @@
 
     <!-- RULE LIST -->
     <div class="box">
-        <h3>📋 My Category Rules</h3>
+        <h3>📋 My Category Rules 
+            <span id="rule-count" class="rule-count">0</span>
+        </h3>
 
         <table>
             <thead>
@@ -43,6 +211,11 @@
             </thead>
             <tbody id="rules-table"></tbody>
         </table>
+
+        <div id="empty-state" class="empty-state" style="display:none;">
+            📂 No rules created yet.<br>
+            Create your first rule to automate categorization.
+        </div>
     </div>
 
 </section>

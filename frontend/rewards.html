@@ -1,92 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Rewards</title>
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8">
+<title>Rewards Dashboard</title>
+<link rel="stylesheet" href="css/rewards.css">
 </head>
+
 <body>
 
-  <!-- Top Header Bar -->
-  <div
-    style="
-      background-color: #1e3a8a;
-      color: white;
-      padding: 15px 25px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    "
-  >
-    <h2 style="margin: 0;">🎁 Rewards</h2>
+<div class="rewards-container">
 
-    <button
-      onclick="window.location.href='dashboard.html'"
-      style="
-        background-color: #ef4444;
-        color: white;
-        border: none;
-        padding: 8px 18px;
-        border-radius: 6px;
-        font-weight: 600;
-        cursor: pointer;
-      "
-    >
-      Back
-    </button>
-  </div>
+    <!-- ===== HEADER ===== -->
+    <div class="page-header">
+        <div class="header-left">
+            <h2>🎁 Rewards</h2>
+        </div>
+        <button class="back-btn" onclick="window.location.href='dashboard.html'">
+            Back
+        </button>
+    </div>
+    <!-- ===== TOP CONTROLS ===== -->
+    <div class="rewards-top-controls">
 
-  <!-- Main Content -->
-  <div
-    style="
-      padding: 25px;
-      background-color: #f1f5f9;
-      min-height: 90vh;
-    "
-  >
+        <div class="left-controls">
+            <select id="currencySelector">
+                <option value="INR">INR</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+            </select>
 
-    <!-- Rewards Card -->
-    <div
-      style="
-        background: white;
-        border-radius: 8px;
-        padding: 20px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-        margin-bottom: 25px;
-      "
-    >
-      <h3 style="margin-bottom: 15px;">My Rewards</h3>
+            <button onclick="loadRewards()" class="refresh-btn">
+                Refresh
+            </button>
+        </div>
 
-      <table width="100%" style="border-collapse: collapse;">
-        <thead>
-          <tr style="background-color: #f8fafc;">
-            <th style="padding: 12px; text-align: left;">Program</th>
-            <th style="padding: 12px; text-align: center;">Points</th>
-            <th style="padding: 12px; text-align: center;">Last Updated</th>
-            <th style="padding: 12px; text-align: center;">Convert</th>
-          </tr>
-        </thead>
-        <tbody id="rewardsTable">
-          <!-- Rows injected by rewards.js -->
-        </tbody>
-      </table>
+        <div class="right-controls">
+            <input type="text" id="programName" placeholder="Program Name">
+            <input type="number" id="pointsInput" placeholder="Points">
+            <input type="number" id="valuePerPoint" placeholder="Value per Point">
+
+            <select id="addCurrency">
+                <option value="INR">INR</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+            </select>
+
+            <button onclick="addRewardProgram()" class="add-btn">
+                Add
+            </button>
+        </div>
+
     </div>
 
-    <!-- Currency Summary Card -->
-    <div
-      style="
-        background: white;
-        border-radius: 8px;
-        padding: 20px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-      "
-    >
-      <h3 style="margin-bottom: 10px;">Currency Summary</h3>
-      <div id="currencySummary" style="font-size: 15px;"></div>
+    <!-- ===== SUMMARY CARDS ===== -->
+    <div class="summary-grid">
+
+        <div class="summary-card">
+            <p>Total Points</p>
+            <h3 id="totalPointsDisplay">0</h3>
+        </div>
+
+        <div class="summary-card primary">
+            <p>Total Reward Value</p>
+            <h3 id="currencySummary">₹ 0</h3>
+        </div>
+        <!-- ===== TIER PROGRESS ===== -->
+        <div class="tier-section">
+            <div class="tier-left">
+                <h4 id="tierLabel">Silver Member</h4>
+                <div class="tier-progress-bar">
+                    <div id="tierProgressFill"></div>
+                </div>
+                <small id="tierProgressText">Progress to Gold</small>
+            </div>
+
+            <div class="stats-strip">
+                <div class="stat-box">
+                    <p>Active Programs</p>
+                    <h3 id="activePrograms">0</h3>
+                </div>
+                <div class="stat-box">
+                    <p>High Value Program</p>
+                    <h3 id="topProgram">-</h3>
+                </div>
+                <div class="stat-box">
+                    <p>Performance</p>
+                    <h3 id="performanceBadge">⭐ Good</h3>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-  </div>
+    <!-- ===== REWARD PROGRAMS GRID ===== -->
+    <div id="rewardsGrid" class="rewards-grid">
+        <!-- Injected by JS -->
+    </div>
 
-  <script src="js/rewards.js"></script>
+</div>
+
+<script src="js/rewards.js"></script>
 </body>
 </html>

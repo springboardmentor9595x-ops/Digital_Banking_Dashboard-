@@ -163,6 +163,7 @@ async function loadBudgetSummary() {
         });
 
         if (newExceeded.length > 0) {
+
             const keys = newExceeded.map(
                 b => `${b.category}-${b.month}-${b.year}`
             );
@@ -171,16 +172,19 @@ async function loadBudgetSummary() {
                 .map(b => `${b.category} (${b.month}/${b.year})`)
                 .join(", ");
 
-            messageEl.innerText =
-                `You have exceeded the budget for: ${message}`;
+            const popupKey = "shown_budget_popup_" + keys.join("_");
 
-            // 🔑 SAVE what we are showing NOW
-            sessionStorage.setItem(
-                "lastShownBudgets",
-                JSON.stringify(keys)
-            );
+            // ✅ SHOW ONLY IF NOT SHOWN BEFORE
+            if (!localStorage.getItem(popupKey)) {
 
-            modal.style.display = "block";
+                messageEl.innerText =
+                    `You have exceeded the budget for: ${message}`;
+
+                modal.style.display = "block";
+
+                localStorage.setItem(popupKey, "true");
+            }
+
         } else {
             modal.style.display = "none";
         }
@@ -282,9 +286,24 @@ function acknowledgeBudgetAlert() {
         JSON.stringify(updated)
     );
 
+    // 🔔 SAVE BUDGET ALERTS TO NOTIFICATIONS
+    lastShown.forEach(key => {
+        addNotification(
+            `📊 Budget Exceeded: ${key.replace(/-/g, " ")}`,
+            "budget",
+            `budget-${key}`
+        );
+    });
+
     // cleanup
     sessionStorage.removeItem("lastShownBudgets");
+
+    // refresh bell badge safely
+    if (typeof refreshNotifications === "function") {
+        refreshNotifications();
+    }
 }
+
 async function loadProfileEmail() {
     try {
         const res = await fetch(`${BASE_URL}/auth/me`, {
@@ -305,9 +324,174 @@ async function loadProfileEmail() {
         console.error("Profile email load failed", err);
     }
 }
+async function syncBillNotificationsWithBackend() {
+    try {
+        const token = localStorage.getItem("access_token");
+
+        const res = await fetch(`${BASE_URL}/bills/`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!res.ok) return;
+
+        const bills = await res.json();
+        const activeBillIds = bills
+            .filter(b => b.status === "due" || b.status === "upcoming")
+            .map(b => b.id);
+
+        let notifications = getNotifications();
+
+        // ❌ REMOVE notifications for PAID bills
+        notifications = notifications.filter(n => {
+            if (n.type !== "bill") return true;
+
+            const match = n.key?.match(/bill-(\d+)-/);
+            if (!match) return true;
+
+            const billId = Number(match[1]);
+            return activeBillIds.includes(billId);
+        });
+
+        localStorage.setItem("notifications", JSON.stringify(notifications));
+
+    } catch (err) {
+        console.error("Bill sync failed", err);
+    }
+}
+
+// ==========================
+// BILL POPUP ON DASHBOARD (SINGLE SOURCE OF TRUTH)
+// ==========================
+document.addEventListener("DOMContentLoaded", () => {
+
+    const notifications = getNotifications();
+
+    const billAlerts = notifications.filter(
+        n => n.type === "bill" && !n.shown
+    );
+
+    if (billAlerts.length === 0) return;
+
+    const message = billAlerts
+        .map(n => `• ${n.message}`)
+        .join("\n");
+
+    alert(`🔔 Bill Reminder\n\n${message}`);
+
+    // mark popup shown but keep unread for bell
+    billAlerts.forEach(n => {
+        n.shown = true;
+        n.read = false;
+    });
+
+    localStorage.setItem("notifications", JSON.stringify(notifications));
+
+    if (typeof refreshNotifications === "function") {
+        refreshNotifications();
+    }
+});
+// ==========================
+// BILL POPUP ON DASHBOARD (DUE + UPCOMING)
+// ==========================
+document.addEventListener("DOMContentLoaded", () => {
+
+    const notifications = getNotifications();
+
+    // take ALL bill notifications that were not shown yet
+    const cameFromBills = sessionStorage.getItem("fromBillsPage") === "true";
+
+    const billAlerts = notifications.filter(
+        n =>
+            n.type === "bill" &&
+            (cameFromBills || !n.shown)
+    );
+
+
+    if (billAlerts.length === 0) return;
+
+    const message = billAlerts
+        .map(n => `• ${n.message}`)
+        .join("\n");
+
+    alert(`🔔 Bill Reminder\n\n${message}`);
+    // clear bills navigation flag
+    sessionStorage.removeItem("fromBillsPage");
+
+    // 👇 after OK
+    billAlerts.forEach(n => {
+        n.shown = true;   // popup will not repeat
+        n.read = false;  // stays unread in bell
+    });
+
+    localStorage.setItem("notifications", JSON.stringify(notifications));
+
+    if (typeof refreshNotifications === "function") {
+        refreshNotifications();
+    }
+});
+// ==========================
+// RESET BILL POPUP WHEN COMING FROM BILLS PAGE
+// ==========================
+(function handleBillsReturn() {
+    const fromBills = sessionStorage.getItem("fromBillsPage");
+
+    if (!fromBills) return;
+
+    let notifications = getNotifications();
+
+    notifications.forEach(n => {
+        if (n.type === "bill") {
+            n.shown = false; // 👈 allow popup again
+        }
+    });
+
+    localStorage.setItem("notifications", JSON.stringify(notifications));
+
+    // clear flag so it runs ONLY once
+    sessionStorage.removeItem("fromBillsPage");
+})();
+async function checkAlerts() {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch("http://127.0.0.1:8000/alerts/", {
+        headers: {
+            "Authorization": "Bearer " + token
+        }
+    });
+
+    const alerts = await res.json();
+
+    const budgetAlert = alerts.find(
+        a => a.alert_type === "budget_exceeded" && a.read_status === false
+    );
+
+   if (budgetAlert) {
+
+        const alertKey = "shown_alert_" + budgetAlert.id;
+
+        // ✅ show popup only once
+        if (!localStorage.getItem(alertKey)) {
+            showPopup(budgetAlert.message);
+            localStorage.setItem(alertKey, "true");
+        }
+
+        // mark as read in backend
+        await fetch(`http://127.0.0.1:8000/alerts/${budgetAlert.id}/read`, {
+            method: "PUT",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+    }
+
+}
 
 // ================= INIT =================
 document.addEventListener("DOMContentLoaded", () => {
-    loadBudgetSummary();
-    loadProfileEmail(); // 👈 ADD ONLY THIS LINE
+    syncBillNotificationsWithBackend()
+        .then(() => {
+            loadBudgetSummary();
+            loadProfileEmail();
+        })
+        .catch(err => console.error(err));
 });

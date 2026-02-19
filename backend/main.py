@@ -6,7 +6,8 @@ from app.routes.auth import router as auth_router
 from app.routes.account import router as account_router
 from app.routes.transaction import router as transaction_router
 from app.routes.transfer import router as transfer_router  # ✅ FIXED
-
+from app.routes import insights
+from app.routes import alerts
 app = FastAPI()
 
 # ✅ CORS (unchanged)
@@ -25,3 +26,5 @@ app.include_router(auth_router)
 app.include_router(account_router)
 app.include_router(transaction_router)
 app.include_router(transfer_router)  # ✅ FIXED
+app.include_router(insights.router)
+app.include_router(alerts.router)

@@ -71,7 +71,10 @@ async function handleTransfer() {
         }
 
         alert("✅ Transfer successful");
-        document.getElementById("transfer-amount").value = "";
+
+        // 🔴 Redirect to dashboard
+        window.location.href = "dashboard.html?reload=" + new Date().getTime();
+
 
     } catch (error) {
         console.error("TRANSFER ERROR:", error);
@@ -85,26 +88,33 @@ async function submitTransaction() {
     const fromAccountId = Number(
         document.getElementById("from-account").value
     );
+
     const amount = Number(
         document.getElementById("amount").value
     );
+
     const merchant =
         document.getElementById("merchant").value.trim();
+
     const category =
         document.getElementById("category").value;
+
     const date =
         document.getElementById("transaction-date").value;
-
-    // ✅ FIX DATE SAFELY (DD/MM/YYYY → YYYY-MM-DD)
-    let isoDate = date;
-    if (date.includes("/")) {
-        const [dd, mm, yyyy] = date.split("/");
-        isoDate = `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
-    }
 
     if (!fromAccountId || amount <= 0 || !merchant || !category || !date) {
         alert("❌ Please fill all fields correctly");
         return;
+    }
+
+    /* ✅ FIX: Convert to FULL ISO datetime (required by FastAPI) */
+    let isoDate;
+
+    if (date.includes("/")) {
+        const [dd, mm, yyyy] = date.split("/");
+        isoDate = `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}T00:00:00`;
+    } else {
+        isoDate = `${date}T00:00:00`;
     }
 
     try {
@@ -113,11 +123,11 @@ async function submitTransaction() {
             headers: authHeaders(),
             body: JSON.stringify({
                 from_account_id: fromAccountId,
-                to_account_id: fromAccountId,
+                to_account_id: null,   // ✅ IMPORTANT: external expense
                 amount: amount,
                 description: merchant,
                 category: category,
-                date: isoDate   // ✅ CORRECT MONTH GUARANTEED
+                date: isoDate
             })
         });
 
@@ -135,10 +145,8 @@ async function submitTransaction() {
 
         alert("✅ Transaction added successfully");
 
-        // 🔔 tell budgets page to refresh
         localStorage.setItem("refreshBudgets", "true");
 
-        // keep your existing redirect
         window.location.href =
             "dashboard.html?reload=" + new Date().getTime();
 
@@ -147,6 +155,7 @@ async function submitTransaction() {
         console.error("Transaction error:", err);
     }
 }
+
 
 /* ================= INIT ================= */
 document.addEventListener("DOMContentLoaded", loadAccountsForTransaction);

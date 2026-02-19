@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Financial Insights</title>
+
+<link rel="stylesheet" href="css/dashboard.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<style>
+body{
+    margin:0;
+    font-family:'Segoe UI',system-ui,sans-serif;
+    background:#f3f6fb;
+    color:#1e293b;
+}
+
+/* HEADER */
+.insights-header{
+    background:linear-gradient(90deg,#1e3a8a,#2563eb);
+    color:white;
+    padding:18px 40px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow:0 4px 20px rgba(0,0,0,0.15);
+}
+
+.back-btn{
+    background:white;
+    color:#1e3a8a;
+    padding:6px 14px;
+    border-radius:6px;
+    text-decoration:none;
+    font-size:14px;
+    font-weight:600;
+}
+
+/* CONTAINER */
+.insights-container{
+    padding:35px 50px;
+}
+
+/* KPI GRID */
+.summary-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:22px;
+    margin-bottom:30px;
+}
+
+.summary-card{
+    background:white;
+    padding:22px;
+    border-radius:12px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.06);
+}
+
+.summary-card h4{
+    font-size:11px;
+    color:#64748b;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    margin-bottom:6px;
+}
+
+.summary-card p{
+    font-size:24px;
+    font-weight:700;
+}
+
+/* TOP CATEGORY */
+.top-category{
+    background:white;
+    padding:18px 22px;
+    border-radius:12px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.06);
+    margin-bottom:30px;
+}
+
+/* GRID */
+.main-grid{
+    display:grid;
+    grid-template-columns:2fr 1fr;
+    gap:25px;
+    margin-bottom:25px;
+}
+
+.bottom-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:25px;
+}
+
+/* CARD */
+.card{
+    background:white;
+    padding:25px;
+    border-radius:14px;
+    box-shadow:0 4px 18px rgba(0,0,0,0.06);
+}
+
+.card h3{
+    font-size:15px;
+    font-weight:600;
+    margin-bottom:18px;
+    border-bottom:1px solid #e2e8f0;
+    padding-bottom:10px;
+}
+
+/* MERCHANTS */
+.merchant-item{
+    margin-bottom:14px;
+}
+
+.merchant-header{
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+    margin-bottom:5px;
+}
+
+.progress-bar{
+    height:6px;
+    background:#e2e8f0;
+    border-radius:6px;
+    overflow:hidden;
+}
+
+.progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,#3b82f6,#1d4ed8);
+}
+
+/* SMART BOX */
+.insight-box{
+    margin-top:15px;
+    padding:12px;
+    border-radius:8px;
+    font-size:13px;
+}
+
+.good{ background:#e6f7ee; color:#166534; }
+.warning{ background:#fff7e6; color:#92400e; }
+.danger{ background:#ffe6e6; color:#991b1b; }
+
+canvas{ max-height:280px !important; }
+/* ===============================
+   Yearly Spending Trend Styling
+================================= */
+
+.full-width {
+    grid-column: span 2;
+    margin-top: 25px;
+}
+
+.trend-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+#yearSelector {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    font-weight: 500;
+    background: white;
+}
+.header-btn {
+    background-color: #dc2626;   /* SAME RED as Bills page */
+    color: white;
+    padding: 6px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.header-btn:hover {
+    background-color: #b91c1c;   /* darker red on hover */
+}
+
+
+</style>
+</head>
+
+<body>
+<div class="insights-header">
+    <h2>📊 Financial Insights</h2>
+
+    <div style="display:flex; gap:10px;">
+
+        <button onclick="exportInsights()" class="header-btn">
+            ⬇ Export
+        </button>
+
+        <a href="dashboard.html" class="header-btn">
+            ← Back to Dashboard
+        </a>
+
+    </div>
+</div>
+
+<div class="insights-container">
+
+    <!-- KPI -->
+    <div class="summary-grid">
+        <div class="summary-card">
+            <h4>Total Income</h4>
+            <p id="insight-income">₹ 0</p>
+        </div>
+        <div class="summary-card">
+            <h4>Total Expense</h4>
+            <p id="insight-expense">₹ 0</p>
+        </div>
+        <div class="summary-card">
+            <h4>Net Savings</h4>
+            <p id="insight-savings">₹ 0</p>
+        </div>
+        <div class="summary-card">
+            <h4>Savings Rate</h4>
+            <p id="insight-rate">0%</p>
+        </div>
+    </div>
+
+    <div class="top-category">
+        <strong>Top Spending Category:</strong>
+        <span id="top-category">Loading...</span>
+    </div>
+
+    <!-- ROW 1 -->
+    <div class="main-grid">
+        <div class="card">
+            <h3>Category Spending Overview</h3>
+            <canvas id="categoryChart"></canvas>
+        </div>
+
+        <div class="card">
+            <h3>Top Spending Merchants</h3>
+            <div id="merchantList"></div>
+            <div id="smartInsight" class="insight-box"></div>
+        </div>
+    </div>
+
+    <!-- ROW 2 -->
+    <div class="bottom-grid">
+        <div class="card">
+            <h3>Income vs Expense</h3>
+            <canvas id="compareChart"></canvas>
+        </div>
+
+        <div class="card">
+            <h3>Financial Health Score</h3>
+            <canvas id="healthChart"></canvas>
+        </div>
+    </div>
+    <!-- ===============================
+         Yearly Spending Trend
+    ================================= -->
+    <div class="card" style="margin-top:25px;">
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="margin:0;">📈 Yearly Spending Trend</h3>
+
+            <select id="yearSelector" style="padding:6px 10px; border-radius:6px;">
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026" selected>2026</option>
+            </select>
+        </div>
+
+        <canvas id="yearlyTrendChart" height="90"></canvas>
+    </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/insights.js"></script>
+
+</body>
+</html>
