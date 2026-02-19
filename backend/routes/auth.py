@@ -2,6 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime
 from database import get_db
 from model import User
 from auth.schemas import UserRegister, UserLogin, Token, UserResponse
@@ -15,6 +18,35 @@ from auth.jwt_handler import (
 )
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+class UserProfileResponse(BaseModel):
+    """Response model for user profile"""
+
+    id: int
+    name: str
+    email: str
+    phone: Optional[str]
+    kyc_status: str
+    role: str
+    created_at: str
+
+    class Config:
+        from_attributes = True
+
+
+class UpdateProfileRequest(BaseModel):
+    """Request to update name and phone"""
+
+    name: str
+    phone: Optional[str] = None
+
+
+class ChangePasswordRequest(BaseModel):
+    """Request to change password"""
+
+    current_password: str
+    new_password: str
 
 
 @router.post(
@@ -100,11 +132,6 @@ async def refresh_access_token(refresh_token: str, db: AsyncSession = Depends(ge
     }
 
 
-@router.get("/profile", response_model=UserResponse)
-async def get_userdata(current_user: User = Depends(get_current_user)):
-    return current_user
-
-
 @router.get("/admin/users", response_model=list[UserResponse])
 async def get_all_users(
     current_admin: User = Depends(get_current_admin), db: AsyncSession = Depends(get_db)
@@ -113,3 +140,141 @@ async def get_all_users(
     result = await db.execute(select(User))
     users = result.scalars().all()
     return users
+
+
+# ============================================
+# PROFILE MANAGEMENT ENDPOINTS
+# ============================================
+
+
+@router.get("/profile", response_model=UserProfileResponse)
+async def get_user_profile(
+    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+):
+    """
+    Get current user's profile information
+
+    Returns:
+        - id: User ID
+        - name: Username
+        - email: Email (read-only)
+        - phone: Phone number
+        - kyc_status: KYC verification status (read-only)
+        - role: User role
+        - created_at: Account creation date
+    """
+    return {
+        "id": current_user.id,
+        "name": current_user.name,
+        "email": current_user.email,
+        "phone": current_user.phone,
+        "kyc_status": current_user.kyc_status,
+        "role": current_user.role,
+        "created_at": current_user.created_at.isoformat(),
+    }
+
+
+@router.patch("/profile")
+async def update_profile(
+    profile_data: UpdateProfileRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Update user profile (name and phone only)
+
+    Email and KYC status cannot be changed
+
+    Args:
+        - name: New username (3-100 characters)
+        - phone: New phone number (10 digits)
+    """
+
+    # Validate phone number if provided
+    if profile_data.phone:
+        if not profile_data.phone.isdigit() or len(profile_data.phone) != 10:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Phone number must be exactly 10 digits",
+            )
+
+    # Validate name length
+    if len(profile_data.name.strip()) < 3:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Name must be at least 3 characters long",
+        )
+
+    # Check if name is already taken by another user (ASYNC VERSION)
+    if profile_data.name != current_user.name:
+        result = await db.execute(  # ← ADD await
+            select(User).where(
+                User.name == profile_data.name, User.id != current_user.id
+            )
+        )
+        existing_user = result.scalars().first()
+
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken"
+            )
+
+    # Update user
+    current_user.name = profile_data.name.strip()
+    current_user.phone = profile_data.phone
+
+    await db.commit()  # ← ADD await
+    await db.refresh(current_user)  # ← ADD await
+
+    return {
+        "message": "Profile updated successfully",
+        "user": {
+            "id": current_user.id,
+            "name": current_user.name,
+            "email": current_user.email,
+            "phone": current_user.phone,
+            "kyc_status": current_user.kyc_status,
+        },
+    }
+
+
+@router.patch("/change-password")
+async def change_password(
+    password_data: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Change user password
+
+    Args:
+        - current_password: Current password for verification
+        - new_password: New password (minimum 8 characters)
+    """
+
+    # Verify current password
+    if not verify_password(password_data.current_password, current_user.password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect",
+        )
+
+    # Validate new password length
+    if len(password_data.new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be at least 8 characters long",
+        )
+
+    # Check if new password is same as current
+    if verify_password(password_data.new_password, current_user.password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password cannot be the same as current password",
+        )
+
+    # Update password
+    current_user.password = hash_password(password_data.new_password)
+    await db.commit()  # ← ADD await
+
+    return {"message": "Password changed successfully"}

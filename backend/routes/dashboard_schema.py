@@ -78,6 +78,7 @@ class DashboardOverviewResponse(BaseModel):
     """
     COMPLETE dashboard data returned to frontend.
 
+
     BIG PICTURE:
     This is what React receives in one API call.
     Everything needed to render the entire dashboard page.

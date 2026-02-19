@@ -152,3 +152,5 @@ target_id INT,
 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 CONSTRAINT fk_adminlogs_users FOREIGN KEY (admin_id) REFERENCES users(id)
 );
+
+ALTER TABLE alerts ADD COLUMN IF NOT EXISTS read_status BOOLEAN DEFAULT FALSE;

@@ -9,6 +9,7 @@ from sqlalchemy import (
     Text,
     ForeignKey,
     Enum,
+    ARRAY,
 )
 
 from sqlalchemy.sql import func
@@ -56,9 +57,9 @@ class BillStatus(enum.Enum):
 class AlertType(enum.Enum):
     """Alert notification types"""
 
-    lowbalance = "lowbalance"
-    billdue = "billdue"
-    budgetexceeded = "budgetexceeded"
+    low_balance = "low_balance"
+    bill_due = "bill_due"
+    budget_exceeded = "budget_exceeded"
 
 
 # ============================================
@@ -159,7 +160,7 @@ class Bill(Base):
         Enum(BillStatus, name="status_enum"),  # ← Specify exact name
         default=BillStatus.upcoming,
     )
-    autopay = Column(Boolean, default=False)
+    auto_pay = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now())
 
 
@@ -190,6 +191,7 @@ class Alert(Base):
         Enum(AlertType, name="type_enum"), nullable=True  # ← Specify exact name
     )
     message = Column(Text, nullable=True)
+    read_status = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now())
 
 
@@ -204,3 +206,21 @@ class AdminLog(Base):
     target_type = Column(String(50), nullable=True)
     target_id = Column(Integer, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
+
+
+class CategoryRule(Base):
+    """
+    Category Rule model - stores categorization rules for transactions
+    """
+
+    __tablename__ = "category_rules"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, nullable=True)  # NULL = system default
+    category_name = Column(String(50), nullable=False)
+    keywords = Column(ARRAY(Text), nullable=True)  # PostgreSQL array
+    merchants = Column(ARRAY(Text), nullable=True)  # PostgreSQL array
+    is_default = Column(Boolean, default=False)
+    priority = Column(Integer, default=100)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

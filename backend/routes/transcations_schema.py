@@ -18,6 +18,27 @@ class TransactionBase(BaseModel):
     posted_date: Optional[datetime] = None
 
 
+# ADD AFTER TransactionBase CLASS:
+
+
+class TransactionCreate(TransactionBase):
+
+    account_id: int = Field(
+        ..., description="ID of the account this transaction belongs to", example=5
+    )
+
+
+class TransactionUpdate(BaseModel):
+
+    description: Optional[str] = Field(None, max_length=100)
+    category: Optional[str] = Field(None, max_length=50)
+    amount: Optional[float] = Field(None, gt=0)
+    currency: Optional[str] = Field(None, pattern="^[A-Z]{3}$")
+    txn_type: Optional[str] = Field(None, pattern="^(debit|credit)$")
+    merchant: Optional[str] = Field(None, max_length=50)
+    txn_date: Optional[datetime] = None
+
+
 class TransactionResponse(BaseModel):
     """What the API returns when showing a transaction"""
 
