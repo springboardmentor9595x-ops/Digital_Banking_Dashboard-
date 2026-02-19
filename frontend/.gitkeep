@@ -11,4 +11,7 @@ index.css
 main.jsx
 api/axios.js
 componenets/ 
+services/
+utils/
+pages/
 public/
