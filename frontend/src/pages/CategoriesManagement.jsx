@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { ArrowLeft, Plus, Edit2, Trash2, Save, X, Tag, Search } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 export default function CategoriesManagement() {
   const navigate = useNavigate();
