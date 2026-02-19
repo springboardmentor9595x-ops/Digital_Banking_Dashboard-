@@ -10,13 +10,18 @@ from sqlalchemy.orm import sessionmaker
 
 load_dotenv()
 
-
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
     raise ValueError(
         "DATABASE_URL not found in environment variables. Check your .env uvi"
     )
+
+
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+elif DATABASE_URL.startswith("postgresql://") and "+asyncpg" not in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
 
 print(f"Connecting to: {DATABASE_URL}")
 
