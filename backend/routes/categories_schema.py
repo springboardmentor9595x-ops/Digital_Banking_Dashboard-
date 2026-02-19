@@ -44,7 +44,7 @@ class CustomCategoryCreateRequest(BaseModel):
     merchants: Optional[List[str]] = Field(
         default_factory=list, description="Merchant names to match"
     )
-    # ✅ REMOVED: priority field - backend will auto-set to 100
+    #  REMOVED: priority field - backend will auto-set to 100
 
 
 class CustomCategoryUpdateRequest(BaseModel):
@@ -53,4 +53,4 @@ class CustomCategoryUpdateRequest(BaseModel):
     category_name: Optional[str] = Field(None, min_length=2, max_length=50)
     keywords: Optional[List[str]] = None
     merchants: Optional[List[str]] = None
-    # ✅ REMOVED: priority field - cannot be changed
+    #  REMOVED: priority field - cannot be changed

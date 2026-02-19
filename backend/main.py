@@ -48,7 +48,7 @@ app = FastAPI(
     lifespan=Lifespan,
 )
 
-# ✅ FIXED CORS CONFIGURATION
+#  FIXED CORS CONFIGURATION
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -57,10 +57,10 @@ app.add_middleware(
         "http://localhost:3000",
     ],
     allow_credentials=True,
-    allow_methods=["*"],  # ✅ CHANGED: Allow all methods
+    allow_methods=["*"],  #  CHANGED: Allow all methods
     allow_headers=["*"],
     expose_headers=["*"],
-    max_age=3600,  # ✅ ADDED: Cache preflight for 1 hour
+    max_age=3600,  #  ADDED: Cache preflight for 1 hour
 )
 
 app.include_router(auth.router)

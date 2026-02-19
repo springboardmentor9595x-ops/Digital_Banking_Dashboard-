@@ -51,7 +51,7 @@ async def create_reward_program(
     4. Return reward with currency conversions
     """
 
-    # ✅ Prevent duplicate program names
+    # Prevent duplicate program names
     existing_query = select(Reward).where(
         Reward.user_id == current_user.id,
         func.lower(Reward.program_name) == payload.program_name.lower(),
@@ -65,7 +65,7 @@ async def create_reward_program(
             detail=f"Reward program '{payload.program_name}' already exists",
         )
 
-    # ✅ Create new reward program
+    # Create new reward program
     new_reward = Reward(
         user_id=current_user.id,
         program_name=payload.program_name,
@@ -76,13 +76,13 @@ async def create_reward_program(
     await db.commit()
     await db.refresh(new_reward)
 
-    # ✅ Calculate currency values
+    # Calculate currency values
     points_value_inr = ExchangeRateService.calculate_points_value(
         new_reward.points_balance
     )
 
     print(
-        f"✅ Created reward: {new_reward.program_name} with {new_reward.points_balance} points (₹{points_value_inr})"
+        f" Created reward: {new_reward.program_name} with {new_reward.points_balance} points (₹{points_value_inr})"
     )
 
     return RewardResponse(
@@ -119,7 +119,7 @@ async def list_rewards(
     Returns: List of rewards with currency conversions
     """
 
-    # ✅ Only fetch current user's rewards
+    # Only fetch current user's rewards
     query = (
         select(Reward)
         .where(Reward.user_id == current_user.id)
@@ -129,7 +129,7 @@ async def list_rewards(
     result = await db.execute(query)
     rewards = result.scalars().all()
 
-    # ✅ Build response with currency conversions
+    # Build response with currency conversions
     reward_responses = []
     for reward in rewards:
         points_value_inr = ExchangeRateService.calculate_points_value(
@@ -174,7 +174,7 @@ async def get_reward(
     """
 
     query = select(Reward).where(
-        Reward.id == reward_id, Reward.user_id == current_user.id  # ✅ Security check
+        Reward.id == reward_id, Reward.user_id == current_user.id  # Security check
     )
     result = await db.execute(query)
     reward = result.scalars().first()
@@ -184,7 +184,7 @@ async def get_reward(
             status_code=status.HTTP_404_NOT_FOUND, detail="Reward program not found"
         )
 
-    # ✅ Calculate currency values
+    # Calculate currency values
     points_value_inr = ExchangeRateService.calculate_points_value(reward.points_balance)
 
     return RewardResponse(
@@ -236,17 +236,17 @@ async def update_reward_points(
             status_code=status.HTTP_404_NOT_FOUND, detail="Reward program not found"
         )
 
-    # ✅ Calculate new balance
+    # Calculate new balance
     new_balance = reward.points_balance + payload.points_to_add
 
-    # ✅ Validate sufficient points for redemption
+    # Validate sufficient points for redemption
     if new_balance < 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Insufficient points. Current balance: {reward.points_balance}, attempted deduction: {abs(payload.points_to_add)}",
         )
 
-    # ✅ Update points and timestamp (FIXED)
+    # Update points and timestamp (FIXED)
     reward.points_balance = new_balance
     # Use func.now() instead of datetime.now() for SQLAlchemy
     # reward.last_updated = func.now()  # This is auto-handled by onupdate
@@ -254,12 +254,12 @@ async def update_reward_points(
     await db.commit()
     await db.refresh(reward)
 
-    # ✅ Calculate currency values
+    # Calculate currency values
     points_value_inr = ExchangeRateService.calculate_points_value(reward.points_balance)
 
     action = "Added" if payload.points_to_add > 0 else "Redeemed"
     print(
-        f"✅ {action} {abs(payload.points_to_add)} points for {reward.program_name} → New balance: {reward.points_balance}"
+        f" {action} {abs(payload.points_to_add)} points for {reward.program_name} → New balance: {reward.points_balance}"
     )
 
     return RewardResponse(
@@ -305,7 +305,7 @@ async def update_reward_points(
 #     await db.delete(reward)
 #     await db.commit()
 
-#     print(f"🗑️ Deleted reward program: {reward.program_name}")
+#     print(f" Deleted reward program: {reward.program_name}")
 
 #     return None
 
@@ -335,7 +335,7 @@ async def get_rewards_summary(
     result = await db.execute(query)
     rewards = result.scalars().all()
 
-    # ✅ Calculate totals
+    #  Calculate totals
     total_programs = len(rewards)
     total_points = sum(r.points_balance for r in rewards)
     total_value_inr = ExchangeRateService.calculate_points_value(total_points)
