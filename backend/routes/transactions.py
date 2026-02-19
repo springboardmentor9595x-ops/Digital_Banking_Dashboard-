@@ -25,7 +25,7 @@ from routes.transcations_schema import (
     TransactionCreate,
     TransactionUpdate,
 )
-from services.categorization import auto_categorize  # ✅ Single import
+from services.categorization import auto_categorize  #  Single import
 import csv
 import io
 from fastapi import Response
@@ -42,7 +42,7 @@ async def recalculate_account_balance(db: AsyncSession, account_id: int):
     Recalculate account balance based on all transactions.
     Balance = Credits - Debits
     """
-    print(f"🔄 Recalculating balance for account_id: {account_id}")  # ✅ DEBUG
+    print(f" Recalculating balance for account_id: {account_id}")  #  DEBUG
 
     # Get all credits for this account
     credits_query = select(func.sum(Transaction.amount)).where(
@@ -51,7 +51,7 @@ async def recalculate_account_balance(db: AsyncSession, account_id: int):
     )
     credits_result = await db.execute(credits_query)
     total_credits = credits_result.scalar() or 0
-    print(f"   Total Credits: {total_credits}")  # ✅ DEBUG
+    print(f"   Total Credits: {total_credits}")  #  DEBUG
 
     # Get all debits for this account
     debits_query = select(func.sum(Transaction.amount)).where(
@@ -60,11 +60,11 @@ async def recalculate_account_balance(db: AsyncSession, account_id: int):
     )
     debits_result = await db.execute(debits_query)
     total_debits = debits_result.scalar() or 0
-    print(f"   Total Debits: {total_debits}")  # ✅ DEBUG
+    print(f"   Total Debits: {total_debits}")  #  DEBUG
 
     # Calculate new balance
     new_balance = float(total_credits) - float(total_debits)
-    print(f"   New Balance: {new_balance}")  # ✅ DEBUG
+    print(f"   New Balance: {new_balance}")  #  DEBUG
 
     # Update account
     account_query = select(Account).where(Account.id == account_id)
@@ -75,9 +75,9 @@ async def recalculate_account_balance(db: AsyncSession, account_id: int):
         old_balance = account.balance
         account.balance = new_balance
         await db.commit()
-        print(f"✅ Balance updated! {old_balance} → {new_balance}")  # ✅ DEBUG
+        print(f" Balance updated! {old_balance} → {new_balance}")  #  DEBUG
     else:
-        print(f"❌ Account {account_id} not found!")  # ✅ DEBUG
+        print(f" Account {account_id} not found!")  #  DEBUG
 
     return new_balance
 
@@ -117,11 +117,11 @@ async def create_transaction(
             detail="Invalid txn_type. Must be 'debit' or 'credit'",
         )
 
-    # ✅ Auto-categorize if category not provided
+    #  Auto-categorize if category not provided
     if payload.category and payload.category.strip():
         final_category = payload.category.strip()
     else:
-        final_category = await auto_categorize(  # ✅ No "from" here
+        final_category = await auto_categorize(  #  No "from" here
             db=db,
             merchant=payload.merchant,
             description=payload.description,
@@ -131,7 +131,7 @@ async def create_transaction(
     new_transaction = Transaction(
         account_id=payload.account_id,
         description=payload.description,
-        category=final_category,  # ✅ Auto-categorized
+        category=final_category,  #  Auto-categorized
         amount=payload.amount,
         currency=payload.currency,
         txn_type=txn_type_enum,
@@ -144,12 +144,12 @@ async def create_transaction(
     await db.commit()
     await db.refresh(new_transaction)
 
-    # ✅ ADD THIS DEBUG LINE
-    print(f"🔥 ABOUT TO UPDATE BALANCE FOR ACCOUNT {payload.account_id}")
+    #  ADD THIS DEBUG LINE
+    print(f" ABOUT TO UPDATE BALANCE FOR ACCOUNT {payload.account_id}")
 
     await recalculate_account_balance(db, payload.account_id)
 
-    print(f"✅ BALANCE UPDATE COMPLETE")
+    print(f" BALANCE UPDATE COMPLETE")
 
     return new_transaction
 
@@ -283,7 +283,7 @@ async def upload_transactions_csv(
     # Commit only if transactions were created
     if transactions_created > 0:
         await db.commit()
-        await recalculate_account_balance(db, account_id)  # ✅ THE ONE MISSING LINE
+        await recalculate_account_balance(db, account_id)  #  THE ONE MISSING LINE
 
     return {
         "message": f"Successfully imported {transactions_created} transactions",
