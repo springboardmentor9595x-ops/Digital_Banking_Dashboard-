@@ -263,7 +263,7 @@ async def clear_all_alerts(
     }
 
 
-# ✅ PARAMETERIZED ROUTE — must be AFTER all static routes
+#  PARAMETERIZED ROUTE — must be AFTER all static routes
 @router.delete("/{alert_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_alert(
     alert_id: int,
