@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { Eye, EyeOff, UserPlus, Mail, Lock, User, Phone } from 'lucide-react';
+import { Eye, EyeOff, UserPlus, Mail, Lock, User, Phone, ShieldCheck } from 'lucide-react'; // Added ShieldCheck icon
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -13,7 +13,7 @@ const Register = () => {
     password: '',
     confirmPassword: '',
     phone: '',
-    role: 'user', // hardcoded default
+    role: 'user', // Default value
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -44,6 +44,11 @@ const Register = () => {
       toast.error('Please enter a valid email address');
       return false;
     }
+    // Added Role Validation
+    if (!formData.role) {
+      toast.error('Please select a role');
+      return false;
+    }
     if (!formData.password) {
       toast.error('Password is required');
       return false;
@@ -65,31 +70,24 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
-
     setLoading(true);
 
     try {
-      const response = await axios.post(`${API_URL}/auth/register`, {
+      await axios.post(`${API_URL}/auth/register`, {
         name: formData.name,
         email: formData.email,
         password: formData.password,
         phone: formData.phone || null,
-        role: formData.role, // ✅ added
+        role: formData.role, 
       });
 
       toast.success(`Account created successfully! Welcome, ${formData.name}! 🎉`);
-
-      setTimeout(() => {
-        navigate('/login');
-      }, 1500);
+      setTimeout(() => navigate('/login'), 1500);
     } catch (error) {
       console.error('Registration error:', error);
       if (error.response?.status === 400) {
         toast.error('Email already exists. Please use a different email');
-      } else if (error.response?.status === 422) {
-        toast.error('Invalid input. Please check your details');
       } else {
         toast.error('Registration failed. Please try again');
       }
@@ -156,6 +154,27 @@ const Register = () => {
                   placeholder="9876543210"
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                 />
+              </div>
+            </div>
+
+            {/* Role Selection - NEW FIELD */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Role *</label>
+              <div className="relative">
+                <ShieldCheck className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <select
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white appearance-none"
+                >
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+                {/* Custom arrow for the select dropdown */}
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/center" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
               </div>
             </div>
 
@@ -240,4 +259,3 @@ const Register = () => {
 };
 
 export default Register;
-
