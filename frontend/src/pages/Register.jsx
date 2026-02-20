@@ -4,6 +4,8 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { Eye, EyeOff, UserPlus, Mail, Lock, User, Phone } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 const Register = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -11,6 +13,7 @@ const Register = () => {
     password: '',
     confirmPassword: '',
     phone: '',
+    role: 'user', // hardcoded default
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -25,7 +28,6 @@ const Register = () => {
   };
 
   const validateForm = () => {
-    // Name validation
     if (!formData.name.trim()) {
       toast.error('Name is required');
       return false;
@@ -34,8 +36,6 @@ const Register = () => {
       toast.error('Name must be at least 2 characters');
       return false;
     }
-
-    // Email validation
     if (!formData.email) {
       toast.error('Email is required');
       return false;
@@ -44,8 +44,6 @@ const Register = () => {
       toast.error('Please enter a valid email address');
       return false;
     }
-
-    // Password validation
     if (!formData.password) {
       toast.error('Password is required');
       return false;
@@ -54,42 +52,35 @@ const Register = () => {
       toast.error('Password must be at least 6 characters');
       return false;
     }
-
-    // Confirm password validation
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match');
       return false;
     }
-
-    // Phone validation (optional)
     if (formData.phone && !/^\d{10}$/.test(formData.phone)) {
       toast.error('Phone number must be 10 digits');
       return false;
     }
-
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8000/auth/register', {
+      const response = await axios.post(`${API_URL}/auth/register`, {
         name: formData.name,
         email: formData.email,
         password: formData.password,
         phone: formData.phone || null,
+        role: formData.role, // ✅ added
       });
 
       toast.success(`Account created successfully! Welcome, ${formData.name}! 🎉`);
-      
-      // Navigate to login after short delay
+
       setTimeout(() => {
         navigate('/login');
       }, 1500);
@@ -110,9 +101,7 @@ const Register = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-8">
       <div className="w-full max-w-md">
-        {/* Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
               <UserPlus className="w-8 h-8 text-blue-600" />
@@ -121,13 +110,10 @@ const Register = () => {
             <p className="text-gray-600 mt-2">Join our banking platform today</p>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Name Input */}
+            {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -141,11 +127,9 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Email Input */}
+            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -159,11 +143,9 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Phone Input */}
+            {/* Phone */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Phone Number (Optional)
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number (Optional)</label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -177,11 +159,9 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Password Input */}
+            {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -197,20 +177,14 @@ const Register = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
 
-            {/* Confirm Password Input */}
+            {/* Confirm Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm Password *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password *</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -226,16 +200,12 @@ const Register = () => {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showConfirmPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -255,14 +225,10 @@ const Register = () => {
             </button>
           </form>
 
-          {/* Footer */}
           <div className="mt-6 text-center">
             <p className="text-gray-600">
               Already have an account?{' '}
-              <Link
-                to="/login"
-                className="text-blue-600 font-semibold hover:text-blue-700 hover:underline"
-              >
+              <Link to="/login" className="text-blue-600 font-semibold hover:text-blue-700 hover:underline">
                 Login here
               </Link>
             </p>
@@ -274,3 +240,4 @@ const Register = () => {
 };
 
 export default Register;
+
