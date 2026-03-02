@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const getHeaders = (isUpload = false, isForm = false) => {
   const token = localStorage.getItem('access_token');
@@ -6,7 +6,9 @@ const getHeaders = (isUpload = false, isForm = false) => {
     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
   };
   
-  if (isUpload) return headers;
+  if (isUpload) {
+    return headers;
+  }
   
   if (isForm) {
     headers['Content-Type'] = 'application/x-www-form-urlencoded';
@@ -21,23 +23,20 @@ export const api = {
   async get(endpoint: string) {
     try {
       const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
-      const response = await fetch(url, { headers: getHeaders(), mode: 'cors' });
+      const response = await fetch(url, { 
+        headers: getHeaders(),
+        mode: 'cors'
+      });
       
       if (response.status === 401) {
         this.handleUnauthorized();
-        return null;
+        return;
       }
 
-      const text = await response.text();
-      let responseData;
-      try {
-        responseData = text ? JSON.parse(text) : null;
-      } catch (e) {
-        responseData = null;
-      }
+      const responseData = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        const message = responseData?.detail || `Server error: ${response.status}`;
+        const message = responseData.detail || `Server error: ${response.status}`;
         throw new Error(typeof message === 'string' ? message : JSON.stringify(message));
       }
       return responseData;
@@ -52,6 +51,7 @@ export const api = {
   async post(endpoint: string, data: any, options: { isUpload?: boolean, isForm?: boolean } = {}) {
     try {
       const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
+      
       let body;
       if (options.isUpload) {
         body = data;
@@ -70,19 +70,13 @@ export const api = {
 
       if (response.status === 401 && endpoint !== '/auth/login') {
         this.handleUnauthorized();
-        return null;
+        return;
       }
 
-      const text = await response.text();
-      let responseData;
-      try {
-        responseData = text ? JSON.parse(text) : null;
-      } catch (e) {
-        responseData = null;
-      }
+      const responseData = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        const message = responseData?.detail || `Server error: ${response.status}`;
+        const message = responseData.detail || `Server error: ${response.status}`;
         throw new Error(typeof message === 'string' ? message : JSON.stringify(message));
       }
       return responseData;
@@ -106,18 +100,14 @@ export const api = {
 
       if (response.status === 401) {
         this.handleUnauthorized();
-        return null;
+        return;
       }
 
-      const text = await response.text();
-      let responseData;
-      try {
-        responseData = text ? JSON.parse(text) : null;
-      } catch (e) {
-        responseData = null;
-      }
+      const responseData = await response.json().catch(() => ({}));
 
-      if (!response.ok) throw new Error(responseData?.detail || `Server error: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(responseData.detail || `Server error: ${response.status}`);
+      }
       return responseData;
     } catch (error: any) {
       throw error;
@@ -135,13 +125,12 @@ export const api = {
 
       if (response.status === 401) {
         this.handleUnauthorized();
-        return null;
+        return;
       }
 
       if (!response.ok) {
-        const text = await response.text();
-        const responseData = text ? JSON.parse(text) : {};
-        throw new Error(responseData?.detail || `Server error: ${response.status}`);
+        const responseData = await response.json().catch(() => ({}));
+        throw new Error(responseData.detail || `Server error: ${response.status}`);
       }
       return { success: true };
     } catch (error: any) {
