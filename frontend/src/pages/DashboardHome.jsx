@@ -82,6 +82,7 @@ export default function DashboardHome() {
   const [accounts, setAccounts] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [budgetSummary, setBudgetSummary] = useState([]);
+  const [insights, setInsights] = useState(null);
 
 const month = new Date().getMonth() + 1;
 const year = new Date().getFullYear();
@@ -104,6 +105,14 @@ const year = new Date().getFullYear();
   })
     .then(res => res.json())
     .then(data => setBudgetSummary(Array.isArray(data) ? data : []));
+
+  fetch(`${API_URL}/insights/summary`, {
+  headers: { Authorization: `Bearer ${token}` }
+})
+  .then(res => res.json())
+  .then(data => setInsights(data))
+  .catch(err => console.log("Insights error:", err));
+
 }, [token, month, year]);
 
 
@@ -172,7 +181,8 @@ const isOver = Array.isArray(budgetSummary)
   <Card title="Total Balance" value={`₹ ${totalBalance}`} />
   <Card title="Total Income" value={`₹ ${totalIncome}`} />
   <Card title="Total Expense" value={`₹ ${totalExpense}`} />
-  <Card title="Accounts" value={accounts.length} />
+  {/* <Card title="Accounts" value={accounts.length} /> */}
+  <Card title="Net Savings" value={`₹ ${totalIncome - totalExpense}`} />
 
   <Card title="Total Budget" value={`₹ ${totalBudget}`} />
   <Card title="Budget Spent" value={`₹ ${totalSpent}`} />
@@ -266,6 +276,72 @@ const isOver = Array.isArray(budgetSummary)
         </div>
 
       </div>
+      {/* ================= INSIGHTS (INLINE STYLE) ================= */}
+{insights && (
+ <div className="space-y-12">
+
+
+    <div className="grid md:grid-cols-2 gap-10">
+
+
+
+      <WhiteSection title="Top Merchants">
+  {insights.top_merchants.map((m, i) => (
+    <Row key={i} label={m.merchant} value={`₹${m.total_spent}`} />
+  ))}
+</WhiteSection>
+
+<WhiteSection title="Savings Overview" className="h-full">
+  <div className="space-y-6">
+
+    {/* Net Savings Main Highlight */}
+    <div className="bg-gradient-to-r from-[#bde0fe] to-[#a2d2ff] rounded-2xl p-6 shadow-md">
+      <p className="text-sm text-gray-600 mb-1">Net Savings</p>
+      <p className="text-3xl font-bold text-[#1e3a8a]">
+        ₹ {totalIncome - totalExpense}
+      </p>
+    </div>
+
+    {/* Metrics Grid */}
+    <div className="grid grid-cols-2 gap-4">
+
+      {/* Savings Rate */}
+      <div className="bg-gray-50 rounded-xl p-4">
+        <p className="text-xs text-gray-500">Savings Rate</p>
+        <p className="text-xl font-semibold text-green-600 mt-1">
+          {totalIncome > 0
+            ? `${Math.round(((totalIncome - totalExpense) / totalIncome) * 100)}%`
+            : "0%"}
+        </p>
+      </div>
+
+      {/* Burn Rate */}
+      <div className="bg-gray-50 rounded-xl p-4">
+        <p className="text-xs text-gray-500">Burn Rate</p>
+        <p className="text-xl font-semibold text-pink-500 mt-1">
+          ₹ {insights.burn_rate}
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+</WhiteSection>
+
+
+    </div>
+
+    {/* <div className="bg-white p-6 rounded-xl shadow w-64">
+      <p className="text-sm text-gray-500">Monthly Burn Rate</p>
+      <p className="text-2xl font-bold text-[#ffafcc]">
+        ₹{insights.burn_rate}
+      </p>
+    </div> */}
+
+  </div>
+)}
+
+
     </div>
   );
 }
@@ -278,3 +354,41 @@ function Card({ title, value }) {
     </div>
   );
 }
+
+function SimpleCard({ title, value }) {
+  return (
+    <div className="bg-gradient-to-r from-[#cdb4db] to-[#a2d2ff] p-5 rounded-xl shadow">
+      <div className="text-sm text-gray-700">{title}</div>
+      <div className="text-xl font-bold mt-1">{value}</div>
+    </div>
+  );
+}
+
+function WhiteSection({ title, children, className = "" }) {
+  return (
+    <div className={`bg-white p-6 rounded-2xl shadow-md border border-gray-200 ${className}`}>
+
+      <h3 className="text-lg font-semibold text-[#1e3a8a] mb-5">
+        {title}
+      </h3>
+      {children}
+    </div>
+  );
+}
+
+function Row({ label, value }) {
+  return (
+    <div className="flex justify-between items-center py-3 border-b border-gray-100 last:border-none">
+      
+      <span className="text-gray-700 font-medium">
+        {label}
+      </span>
+
+      <span className="font-semibold text-[#1e3a8a]">
+        {value}
+      </span>
+
+    </div>
+  );
+}
+

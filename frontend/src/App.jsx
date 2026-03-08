@@ -43,6 +43,7 @@ import Rewards from "./pages/Rewards";
 import Insights from "./pages/Insights";
 import Alerts from "./pages/Alerts";
 import Reports from "./pages/Reports";
+import ProfilePage from "./pages/ProfilePage";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -70,6 +71,7 @@ function App() {
           <Route path="insights" element={<Insights />} />
 <Route path="alerts" element={<Alerts />} />
           <Route path="reports" element={<Reports />} />
+          <Route path="profile" element={<ProfilePage />} />
 
    
         </Route>

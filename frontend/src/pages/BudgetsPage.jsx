@@ -93,6 +93,30 @@ export default function BudgetsPage() {
   }
 };
 
+const handleDeleteBudget = async (id) => {
+  if (!window.confirm("Are you sure you want to delete this budget?")) return;
+
+  const res = await fetch(`${API_URL}/budgets/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!res.ok) {
+    alert("Failed to delete budget");
+    return;
+  }
+
+  alert("Budget deleted successfully");
+
+  // Refresh summary
+  fetch(`${API_URL}/budgets/summary?month=${month}&year=${year}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+    .then(res => res.json())
+    .then(data => setBudgetSummary(data));
+};
 
   return (
     <div className="p-6 space-y-6">
@@ -188,12 +212,23 @@ export default function BudgetsPage() {
             b.over_budget ? "border-2 border-red-500" : "border"
           }`}
         >
-          <div className="flex justify-between mb-2">
-            <span className="font-semibold">{b.category}</span>
-            <span className="text-sm">
-              ₹{b.spent} / ₹{b.limit}
-            </span>
-          </div>
+          <div className="flex justify-between items-center mb-2">
+  <span className="font-semibold">{b.category}</span>
+
+  <div className="flex items-center gap-3">
+    <span className="text-sm">
+      ₹{b.spent} / ₹{b.limit}
+    </span>
+
+    <button
+      onClick={() => handleDeleteBudget(b.id)}
+      className="text-red-500 hover:text-red-700 text-sm font-semibold"
+    >
+      🗑
+    </button>
+  </div>
+</div>
+
 
           <div className="w-full bg-gray-200 h-3 rounded overflow-hidden">
   <div

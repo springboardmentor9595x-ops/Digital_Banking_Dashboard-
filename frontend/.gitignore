@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+__pycache__/
+*.pyc
+uploads/
+venv/
+node_modules/
+celerybeat-schedule.dat
+.env

@@ -252,7 +252,7 @@ const saveNewTransaction = async () => {
               <th className="p-3 text-left">Date</th>
               <th className="p-3 text-left">Description</th>
               <th className="p-3 text-left">Category</th>
-              <th className="p-3 text-left">Quick Edit</th>
+              {/* <th className="p-3 text-left">Quick Edit</th> */}
               <th className="p-3 text-left">Account</th>
               <th className="p-3 text-left">Type</th>
               <th className="p-3 text-left">Amount</th>
@@ -279,7 +279,7 @@ const saveNewTransaction = async () => {
                   </span>
                 </td>
 
-                {/* QUICK EDIT DROPDOWN */}
+                {/* QUICK EDIT DROPDOWN
                 <td className="p-3">
                   <select
                     className="border rounded px-2 py-1 text-sm"
@@ -295,7 +295,7 @@ const saveNewTransaction = async () => {
                     ))}
                     <option value="Others">Others</option>
                   </select>
-                </td>
+                </td> */}
 
                 {/* ACCOUNT NAME */}
                 <td className="p-3">

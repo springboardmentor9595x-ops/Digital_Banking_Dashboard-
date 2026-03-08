@@ -31,7 +31,12 @@ from fastapi import APIRouter, Depends, UploadFile, File
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..deps import get_current_user
-import os, uuid
+import os, uuid 
+from fastapi import HTTPException
+from app.models import User
+from app.security import verify_password, hash_password
+
+
 
 router = APIRouter(prefix="/profile", tags=["Profile"])
 
@@ -54,3 +59,40 @@ def upload_photo(
     db.commit()
 
     return {"image_url": f"/uploads/{filename}"}
+
+
+@router.put("/update-name")
+def update_name(
+    new_name: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not new_name:
+        raise HTTPException(status_code=400, detail="Name required")
+
+    current_user.name = new_name
+    db.commit()
+    db.refresh(current_user)
+
+    return {"message": "Name updated successfully"}
+
+
+@router.put("/update-password")
+def update_password(
+    current_password: str,
+    new_password: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # check current password
+    if not verify_password(current_password, current_user.password):
+        raise HTTPException(status_code=400, detail="Wrong current password")
+
+    # hash new password
+    hashed_new_password = hash_password(new_password)
+
+
+    current_user.password = hashed_new_password
+    db.commit()
+
+    return {"message": "Password updated successfully"}

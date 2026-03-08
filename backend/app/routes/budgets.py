@@ -118,6 +118,7 @@ def budget_summary(
     )
 
         result.append({
+            "id": budget.id,
             "category": budget.category,
             "limit": float(budget.limit_amount),
             "spent": float(total_spent),
@@ -127,4 +128,24 @@ def budget_summary(
 
     return result
     
+# Delete Budget
+@router.delete("/{budget_id}")
+def delete_budget(
+    budget_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    budget = db.query(Budget).filter(
+        Budget.id == budget_id,
+        Budget.user_id == current_user.id
+    ).first()
+
+    if not budget:
+        raise HTTPException(status_code=404, detail="Budget not found")
+
+    db.delete(budget)
+    db.commit()
+
+    return {"message": "Budget deleted successfully"}
+
    

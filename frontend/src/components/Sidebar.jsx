@@ -41,9 +41,11 @@ const unread = alerts.filter(a => !a.read_status).length;
     { name: "Budgets", path: "/dashboard/budgets", icon: PieChart },
     { name: "Bills", path: "/dashboard/bills", icon: Receipt },
     { name: "Rewards", path: "/dashboard/rewards", icon: Gift },
-    { name: "Insights", path: "/dashboard/insights", icon: BarChart3 },
+    // { name: "Insights", path: "/dashboard/insights", icon: BarChart3 },
     { name: "Alerts", path: "/dashboard/alerts", icon: Bell },
     // { name: "Settings", path: "/dashboard/settings", icon: Settings },
+    { name: "Profile", path: "/dashboard/profile", icon: Settings },
+
     { name: "Reports", path: "/dashboard/reports", icon: FileText },
 
   ];

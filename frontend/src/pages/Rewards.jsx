@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { API_URL } from "../api";
+import { Trash2 } from "lucide-react";
+
 
 export default function Rewards() {
   const token =
@@ -121,6 +123,28 @@ export default function Rewards() {
       setError("Failed to update points");
     }
   };
+  /* ================= DELETE PROGRAM ================= */
+
+const deleteProgram = async (id) => {
+  if (!window.confirm("Are you sure you want to delete this reward program?"))
+    return;
+
+  try {
+    const res = await fetch(`${API_URL}/rewards/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) throw new Error();
+
+    fetchRewards();
+  } catch {
+    setError("Failed to delete reward program");
+  }
+};
+
 
   /* ================= CALCULATIONS ================= */
 
@@ -208,27 +232,34 @@ export default function Rewards() {
         ) : (
           rewards.map((r) => (
             <div
-              key={r.id}
-              className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition space-y-4"
-            >
-              <div className="flex justify-between">
-                <div>
-                  <p className="font-semibold text-gray-800">
-                    {r.program_name}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Reward Program
-                  </p>
-                </div>
+  key={r.id}
+  className="relative bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition space-y-4"
+>
 
-                <span className="inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
-  
-  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-  
-  Active
-</span>
+              <div className="flex justify-between items-start">
+  <div>
+    <p className="font-semibold text-gray-800">
+      {r.program_name}
+    </p>
+    <p className="text-xs text-gray-500">
+      Reward Program
+    </p>
+  </div>
 
-              </div>
+  <div className="flex items-center gap-3">
+    <span className="inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+      Active
+    </span>
+
+    <button
+      onClick={() => deleteProgram(r.id)}
+      className="text-red-400 hover:text-red-600 transition"
+    >
+      <Trash2 size={18} />
+    </button>
+  </div>
+</div>
 
               <div className="text-2xl font-bold text-gray-900">
                 {r.points_balance}

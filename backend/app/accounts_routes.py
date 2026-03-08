@@ -114,7 +114,8 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field, validator
 from typing import Optional
 from .database import get_db
-from .models import Account
+from .models import Account, Transaction
+
 from .deps import get_current_user
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -254,7 +255,18 @@ def delete_account(
             detail="You are not allowed to delete this account"
         )
 
+        # 🔥 CHECK IF TRANSACTIONS EXIST
+    existing_txn = db.query(Transaction).filter(
+        Transaction.account_id == account_id
+    ).first()
+
+    if existing_txn:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete account. Transactions exist."
+        )
+
     db.delete(account)
     db.commit()
 
-    return {"message": "Account deleted"}
+    return {"message": "Account deleted successfully"}

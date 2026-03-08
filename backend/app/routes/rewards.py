@@ -104,3 +104,21 @@ def list_rewards(
         })
 
     return response
+@router.delete("/{reward_id}")
+def delete_reward(
+    reward_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    reward = db.query(Reward).filter(
+        Reward.id == reward_id,
+        Reward.user_id == current_user.id
+    ).first()
+
+    if not reward:
+        raise HTTPException(status_code=404, detail="Reward not found")
+
+    db.delete(reward)
+    db.commit()
+
+    return {"message": "Reward deleted successfully"}

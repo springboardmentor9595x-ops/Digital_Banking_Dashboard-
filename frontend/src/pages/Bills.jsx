@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { Trash2 } from "lucide-react";
 
 export default function Bills() {
   const [form, setForm] = useState({
@@ -77,6 +78,16 @@ export default function Bills() {
     );
     fetchBills();
   };
+  const deleteBill = async (id) => {
+  if (!window.confirm("Are you sure you want to delete this bill?")) return;
+
+  await axios.delete(`http://127.0.0.1:8000/bills/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  fetchBills();
+};
+
 
   const statusBadge = (status) => {
     if (status === "paid")
@@ -223,16 +234,27 @@ export default function Bills() {
                         {bill.status.toUpperCase()}
                       </span>
                     </td>
-                    <td className="py-3 text-right">
-                      {bill.status !== "paid" && (
-                        <button
-                          onClick={() => markPaid(bill)}
-                          className="px-3 py-1 text-xs rounded-md bg-green-600 text-white hover:bg-green-700 transition"
-                        >
-                          Mark Paid
-                        </button>
-                      )}
-                    </td>
+                    <td className="py-3 text-right space-x-2">
+
+  {bill.status !== "paid" && (
+    <button
+      onClick={() => markPaid(bill)}
+      className="px-3 py-1 text-xs rounded-md bg-green-600 text-white hover:bg-green-700 transition"
+    >
+      Mark Paid
+    </button>
+  )}
+
+  <button
+  onClick={() => deleteBill(bill.id)}
+  className="text-red-500 hover:text-red-700"
+>
+  <Trash2 size={18} />
+</button>
+
+
+</td>
+
                   </tr>
                 ))}
                 {bills.length === 0 && (
